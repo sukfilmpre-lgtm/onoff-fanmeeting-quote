@@ -50,7 +50,8 @@ function init() {
         skip = false;
         if (card) html += card + '</div>';
         var cls = a.includes('한국') ? 'orange' : 'green';
-        card = '<div class="card ' + cls + '"><div class="card-title">' + a.replace(/[\[\]]/g, '').trim() + '</div>';
+        var unit = a.includes('일본') ? ' <span class="unit">₩ 원화 환산</span>' : ' <span class="unit">₩</span>';
+        card = '<div class="card ' + cls + '"><div class="card-title">' + a.replace(/[\[\]]/g, '').trim() + unit + '</div>';
         return;
       }
       if (skip || !card) return;
