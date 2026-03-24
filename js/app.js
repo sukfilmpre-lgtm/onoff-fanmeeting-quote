@@ -1,4 +1,4 @@
-const SHEET_ID = '1ouGSDvSWESS-vKm5FcW4JTwQyJx9saCULhd41vI7J1o';
+const SHEET_ID = '1o5XdAT1wg8Jv5Boj6rdy_klGJHlB_am4E7eZXs9S15s';
 const SHEETS = ['한국_견적', '일본_견적_오모테산도', '일본_견적_와테라스', 'MD_판매', '환율', '종합_대시보드'];
 
 let exchangeRate = 9.5;
