@@ -15,88 +15,32 @@
       <button onclick="refreshData()" class="refresh-btn">새로고침</button>
     </div>
   </header>
-
   <main>
     <section class="summary-section">
       <h2>종합 수익 요약</h2>
-      <div class="summary-cards">
-        <div class="card kr">
-          <h3>한국 (헤븐리) - 성암아트홀 200석</h3>
-          <div class="card-row"><span>제작비(VAT포함)</span><span id="kr-cost" class="amount">-</span></div>
-          <div class="card-row"><span>티켓 수입</span><span id="kr-ticket" class="amount">-</span></div>
-          <div class="card-row"><span>MD 수익</span><span id="kr-md" class="amount">-</span></div>
-          <div class="card-row"><span>중계/VOD</span><span id="kr-vod" class="amount">-</span></div>
-          <div class="card-row total"><span>순이익</span><span id="kr-profit" class="amount">-</span></div>
-        </div>
-        <div class="card jp2">
-          <h3>일본 (IMX) - 와테라스 160석</h3>
-          <div class="card-row"><span>총 수입</span><span id="jp-income" class="amount">-</span></div>
-          <div class="card-row"><span>총 지출</span><span id="jp-expense" class="amount">-</span></div>
-          <div class="card-row total"><span>이익</span><span id="jp-profit" class="amount">-</span></div>
-        </div>
-      </div>
-
-      <h2>수익 배분</h2>
-      <div class="summary-cards">
-        <div class="card kr">
-          <h3>한국 (헤븐리)</h3>
-          <div class="card-row"><span>석필름</span><span id="dist-kr-suk" class="amount">-</span></div>
-          <div class="card-row"><span>헤븐리</span><span id="dist-kr-hev" class="amount">-</span></div>
-          <div class="card-row"><span>중계/VOD 석필름</span><span id="dist-kr-vod-suk" class="amount">-</span></div>
-          <div class="card-row"><span>중계/VOD 헤븐리</span><span id="dist-kr-vod-hev" class="amount">-</span></div>
-          <div class="card-row"><span>한지우</span><span id="dist-kr-actor-a" class="amount">-</span></div>
-          <div class="card-row"><span>조윤</span><span id="dist-kr-actor-b" class="amount">-</span></div>
-          <div class="card-row sub"><span>배분 비율 <span id="dist-kr-ratio">-</span></span></div>
-        </div>
-        <div class="card jp2">
-          <h3>일본 (IMX) - 와테라스</h3>
-          <div class="card-row"><span>석필름</span><span id="dist-jp-suk" class="amount">-</span></div>
-          <div class="card-row"><span>IMX</span><span id="dist-jp-imx" class="amount">-</span></div>
-          <div class="card-row"><span>중계/VOD (석필름 단독)</span><span id="dist-jp-vod" class="amount">-</span></div>
-          <div class="card-row"><span>한지우</span><span id="dist-jp-actor-a" class="amount">-</span></div>
-          <div class="card-row"><span>조윤</span><span id="dist-jp-actor-b" class="amount">-</span></div>
-          <div class="card-row sub"><span>배분 비율 <span id="dist-jp-ratio">-</span></span></div>
-        </div>
-      </div>
-      <div class="card-row sub" style="padding:8px 0"><span>※ 배분 비율·배우 게런티는 스프레드시트 '수익배분' 탭에서 수정</span></div>
+      <div id="dashboard-area"></div>
     </section>
-
+    <section class="summary-section">
+      <h2>수익 배분</h2>
+      <div id="distribution-area"></div>
+    </section>
     <section class="detail-section">
       <h2>한국 (헤븐리) 견적 상세</h2>
-      <div id="kr-table-container">
-        <table id="kr-table" class="data-table">
-          <thead><tr><th>구분</th><th>소구분</th><th>단가</th><th>단위</th><th>수량</th><th>금액</th><th>비고</th></tr></thead>
-          <tbody id="kr-tbody"></tbody>
-        </table>
-      </div>
+      <div id="kr-detail"></div>
     </section>
-
     <section class="detail-section">
       <h2>일본 (IMX) 견적 - 와테라스 160석</h2>
-      <div id="jp-table-container">
-        <table id="jp-table" class="data-table">
-          <thead><tr><th>항목</th><th>단가/가격</th><th>수량</th><th>금액(¥)</th><th>금액(₩)</th></tr></thead>
-          <tbody id="jp-tbody"></tbody>
-        </table>
-      </div>
+      <div id="jp-detail"></div>
     </section>
-
     <section class="detail-section">
       <h2>MD 판매</h2>
-      <div id="md-table-container">
-        <table id="md-table" class="data-table">
-          <thead><tr><th>구분</th><th>상품명</th><th>원가</th><th>판매가</th><th>수량</th><th>매출</th><th>마진/개</th><th>총마진</th></tr></thead>
-          <tbody id="md-tbody"></tbody>
-        </table>
-      </div>
+      <div id="md-detail"></div>
     </section>
   </main>
-
   <footer>
-    <p>데이터 소스: <a href="https://docs.google.com/spreadsheets/d/1o5XdAT1wg8Jv5Boj6rdy_klGJHlB_am4E7eZXs9S15s/edit" target="_blank">Google Spreadsheet</a></p>
+    <p>데이터: <a href="https://docs.google.com/spreadsheets/d/1o5XdAT1wg8Jv5Boj6rdy_klGJHlB_am4E7eZXs9S15s/edit" target="_blank">Google Spreadsheet</a></p>
     <p id="last-update"></p>
   </footer>
-
   <script src="js/app.js"></script>
 </body>
 </html>

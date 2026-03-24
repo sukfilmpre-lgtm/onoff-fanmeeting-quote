@@ -1,219 +1,259 @@
 const SHEET_ID = '1o5XdAT1wg8Jv5Boj6rdy_klGJHlB_am4E7eZXs9S15s';
-let exchangeRate = 9.5;
 
 function fmt(n) {
-  if (n === null || n === undefined || n === '' || isNaN(n)) return '-';
+  if (n===null||n===undefined||n===''||isNaN(n)) return '-';
   return Math.round(Number(n)).toLocaleString('ko-KR');
 }
 function fmtWon(n) {
-  if (n === null || n === undefined || n === '' || isNaN(n)) return '-';
-  return '₩' + Math.round(Number(n)).toLocaleString('ko-KR');
-}
-function fmtYen(n) {
-  if (n === null || n === undefined || n === '' || isNaN(n)) return '-';
-  return '¥' + Math.round(Number(n)).toLocaleString('ko-KR');
+  if (n===null||n===undefined||n===''||isNaN(n)) return '-';
+  const v = Math.round(Number(n));
+  return (v<0?'-':'') + '₩' + Math.abs(v).toLocaleString('ko-KR');
 }
 
 async function fetchExchangeRate() {
   try {
     const res = await fetch('https://open.er-api.com/v6/latest/JPY');
-    const data = await res.json();
-    exchangeRate = data.rates.KRW;
-    document.getElementById('exchange-rate').textContent = `1 JPY = ${exchangeRate.toFixed(2)} KRW`;
-    document.getElementById('exchange-date').textContent = `기준: ${data.time_last_update_utc.split(' ').slice(0,4).join(' ')}`;
+    const d = await res.json();
+    document.getElementById('exchange-rate').textContent = `1 JPY = ${d.rates.KRW.toFixed(2)} KRW`;
+    document.getElementById('exchange-date').textContent = `기준: ${d.time_last_update_utc.split(' ').slice(0,4).join(' ')}`;
   } catch(e) {
-    document.getElementById('exchange-rate').textContent = `1 JPY = ${exchangeRate} KRW (기본값)`;
+    document.getElementById('exchange-rate').textContent = '환율 로드 실패';
   }
 }
 
-async function fetchSheetData(sheetName) {
-  const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(sheetName)}`;
+async function fetchSheet(name) {
+  const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(name)}`;
   try {
     const res = await fetch(url);
-    const text = await res.text();
-    return JSON.parse(text.substring(47, text.length - 2)).table;
-  } catch(e) { return null; }
+    const txt = await res.text();
+    const table = JSON.parse(txt.substring(47, txt.length-2)).table;
+    return table.rows.map(r => r.c ? r.c.map(c => c ? c.v : null) : []);
+  } catch(e) { return []; }
 }
 
-function getCellValue(row, colIndex) {
-  if (!row || !row.c || !row.c[colIndex]) return null;
-  return row.c[colIndex].v;
-}
-
-function renderKoreaTable(table) {
-  if (!table) return;
-  const tbody = document.getElementById('kr-tbody');
-  tbody.innerHTML = '';
-  let totalCost = 0, ticketIncome = 0, vodIncome = 0;
-
-  table.rows.forEach((row, i) => {
-    if (i < 2) return;
+// Generic table renderer
+function renderTable(rows, container, opts={}) {
+  const div = document.createElement('div');
+  const table = document.createElement('table');
+  table.className = 'data-table';
+  rows.forEach(cells => {
+    if (!cells || cells.every(c => !c)) return;
     const tr = document.createElement('tr');
-    const c = Array.from({length: 7}, (_, j) => getCellValue(row, j));
-    const col0 = c[0] || '', col1 = c[1] || '';
+    const first = (cells[0]||'').toString();
+    const second = (cells[1]||'').toString();
 
-    if (col0.startsWith('[') || col0.startsWith('===')) {
-      tr.innerHTML = `<td colspan="7" style="font-weight:600;background:var(--bg);font-size:13px;color:var(--text-secondary)">${col0}</td>`;
-      tbody.appendChild(tr); return;
+    // Section header
+    if (first.startsWith('[')) {
+      tr.innerHTML = `<td colspan="${cells.length}" class="section-header">${first}</td>`;
+      table.appendChild(tr); return;
+    }
+    // Table header (dark)
+    if (['구분','항목','좌석 종류','상품명'].includes(first) || ['소구분','항목','가격(₩)','단가(₩)','판매원가(¥)','판매원가(₩)','엔화(¥)','금액/비율'].includes(second)) {
+      cells.forEach(c => { const th = document.createElement('th'); th.textContent = c||''; tr.appendChild(th); });
+      table.appendChild(tr); return;
     }
 
-    if (col1.includes('소계') || col0.includes('소계')) tr.classList.add('subtotal');
-    if (col1.includes('합계') || col1.includes('순이익')) tr.classList.add('grand-total');
+    const isSub = first.includes('소계')||second.includes('소계')||second.includes('합계');
+    const isProfit = first==='이익'||second.includes('순이익')||first.includes('이익');
+    if (isSub) tr.classList.add('subtotal');
+    if (isProfit) tr.classList.add('profit-row');
 
-    tr.innerHTML = `<td>${col0}</td><td>${col1}</td><td class="num">${fmt(c[2])}</td><td class="num">${fmt(c[3])}</td><td class="num">${fmt(c[4])}</td><td class="num">${fmt(c[5])}</td><td>${c[6]||''}</td>`;
-    tbody.appendChild(tr);
-
-    if (col1.includes('제작비') && col1.includes('VAT')) totalCost = c[5] || 0;
-    if (col0 === '티켓 소계') ticketIncome = c[3] || 0;
-    if (col0 === '중계/VOD 소계') vodIncome = c[3] || 0;
+    cells.forEach((c,i) => {
+      const td = document.createElement('td');
+      if (typeof c === 'number') {
+        td.className = 'num';
+        td.textContent = fmt(c);
+      } else {
+        td.textContent = c||'';
+      }
+      tr.appendChild(td);
+    });
+    table.appendChild(tr);
   });
-
-  document.getElementById('kr-cost').textContent = fmtWon(totalCost);
-  document.getElementById('kr-ticket').textContent = fmtWon(ticketIncome);
-  document.getElementById('kr-vod').textContent = fmtWon(vodIncome);
+  container.innerHTML = '';
+  div.appendChild(table);
+  container.appendChild(div);
 }
 
-function renderJapanTable(table) {
-  if (!table) return;
-  const tbody = document.getElementById('jp-tbody');
-  tbody.innerHTML = '';
-  let totalIncome = 0, totalExpense = 0;
+// Dashboard - render as cards from 종합_대시보드 sheet
+function renderDashboard(rows) {
+  const area = document.getElementById('dashboard-area');
+  area.innerHTML = '';
+  const grid = document.createElement('div');
+  grid.className = 'summary-cards';
 
-  table.rows.forEach((row, i) => {
-    if (i < 1) return;
-    const tr = document.createElement('tr');
-    const c = Array.from({length: 6}, (_, j) => getCellValue(row, j));
-    const col0 = c[0] || '';
+  let currentCard = null, cardDiv = null;
+  rows.forEach(cells => {
+    if (!cells) return;
+    const c0 = (cells[0]||'').toString();
+    const c1 = cells[1];
+    const c2 = cells[2];
 
-    if (col0.startsWith('[') || col0.startsWith('===')) {
-      tr.innerHTML = `<td colspan="5" style="font-weight:600;background:var(--bg);font-size:13px;color:var(--text-secondary);letter-spacing:0.02em">${col0}</td>`;
+    if (c0.startsWith('[')) {
+      // New card
+      if (cardDiv) grid.appendChild(cardDiv);
+      cardDiv = document.createElement('div');
+      cardDiv.className = 'card' + (c0.includes('한국')?' kr':' jp2');
+      const h3 = document.createElement('h3');
+      h3.textContent = c0.replace(/[\[\]]/g,'').trim();
+      cardDiv.appendChild(h3);
+      return;
+    }
+    if (!cardDiv || !c0 || c0.startsWith('on&off') || ['항목',''].includes(c0)) return;
+
+    const row = document.createElement('div');
+    row.className = 'card-row';
+    if (c0.includes('순이익')||c0==='이익') row.classList.add('total');
+
+    const label = document.createElement('span');
+    label.textContent = c0;
+    const val = document.createElement('span');
+    val.className = 'amount';
+    if (c2 !== null && c2 !== undefined) {
+      val.textContent = typeof c1==='number' ? fmtWon(c2) : (c1||'');
+      // Show both yen and won for japan
+      if (typeof c1==='number' && typeof c2==='number') {
+        val.textContent = fmtWon(c2);
+      }
     } else {
-      if (col0.includes('소계') || col0.includes('합계')) tr.classList.add('subtotal');
-      if (col0.includes('이익') || col0.includes('몫')) tr.classList.add('grand-total');
-      tr.innerHTML = `<td>${col0}</td><td class="num">${fmt(c[1])}</td><td class="num">${fmt(c[2])}</td><td class="num">${fmtYen(c[3]||c[4])}</td><td class="num">${fmtWon(c[4]||c[5])}</td>`;
-      if (col0 === '총 수입') totalIncome = c[4] || 0;
-      if (col0 === '총 지출') totalExpense = c[4] || 0;
+      val.textContent = typeof c1==='number' ? fmtWon(c1) : (c1||'');
     }
-    tbody.appendChild(tr);
+    row.appendChild(label);
+    row.appendChild(val);
+    cardDiv.appendChild(row);
   });
-
-  document.getElementById('jp-income').textContent = fmtWon(totalIncome);
-  document.getElementById('jp-expense').textContent = fmtWon(totalExpense);
-  document.getElementById('jp-profit').textContent = fmtWon(totalIncome - totalExpense);
+  if (cardDiv) grid.appendChild(cardDiv);
+  area.appendChild(grid);
 }
 
-function renderMDTable(table) {
-  if (!table) return;
-  const tbody = document.getElementById('md-tbody');
-  tbody.innerHTML = '';
-  let krMdTotal = 0, currentSection = '';
+// Distribution - render as cards from 수익배분 sheet
+function renderDistribution(rows) {
+  const area = document.getElementById('distribution-area');
+  area.innerHTML = '';
 
-  table.rows.forEach((row) => {
-    const col0 = getCellValue(row, 0) || '';
-    const tr = document.createElement('tr');
+  // Parse data by section + label
+  let section = '';
+  const d = {};
+  rows.forEach(cells => {
+    if (!cells) return;
+    const c0 = (cells[0]||'').toString();
+    const c1 = (cells[1]||'').toString();
+    const c2 = cells[2];
+    if (c0.startsWith('[')) { section = c0; return; }
 
-    if (col0.startsWith('[') || col0.startsWith('===')) {
-      currentSection = col0;
-      tr.classList.add('md-section-header');
-      tr.innerHTML = `<td colspan="8" style="font-size:13px;padding:12px 10px;font-weight:600">${col0}</td>`;
-      tbody.appendChild(tr); return;
+    if (section.includes('배분 비율')) {
+      if (c0.includes('한국')&&c1==='석필름') d.krSukRate=c2;
+      if (c1==='헤븐리') d.krHevRate=c2;
+      if (c0.includes('일본')&&c1==='석필름') d.jpSukRate=c2;
+      if (c1==='IMX'&&!section.includes('자동')) d.jpImxRate=c2;
     }
-    if (col0 === '소계') {
-      tr.classList.add('subtotal');
-      const c = Array.from({length: 8}, (_, j) => getCellValue(row, j));
-      if (currentSection.includes('한국')) krMdTotal = c[6] || 0;
-      tr.innerHTML = `<td></td><td><strong>소계</strong></td><td></td><td></td><td class="num">${fmt(c[3])}</td><td class="num">${fmt(c[4])}</td><td class="num">${fmt(c[6])}</td><td class="num">${fmt(c[7])}</td>`;
-      tbody.appendChild(tr); return;
+    if (section.includes('게런티')&&section.includes('한국')) {
+      if (c1==='한지우') d.krActorA=c2;
+      if (c1==='조윤') d.krActorB=c2;
     }
-    if (!col0 || col0 === '상품명') return;
-    const c = Array.from({length: 8}, (_, j) => getCellValue(row, j));
-    tr.innerHTML = `<td></td><td>${col0}</td><td class="num">${fmt(c[1])}</td><td class="num">${fmt(c[2])}</td><td class="num">${fmt(c[3])}</td><td class="num">${fmt(c[4])}</td><td class="num">${fmt(c[5])}</td><td class="num">${fmt(c[6]||c[7])}</td>`;
-    tbody.appendChild(tr);
-  });
-  document.getElementById('kr-md').textContent = fmtWon(krMdTotal);
-}
-
-function renderDistribution(table) {
-  if (!table) return;
-  // Row map from current spreadsheet (verified)
-  // 비율: 5,6,8,9 / 한국게런티: 12,13,14 / 일본게런티: 17,18,19
-  // 한국자동: 23석필름,24헤븐리,25중계석필름,26중계헤븐리
-  // 일본자동: 30석필름,31IMX
-  // 한국중계: 38석필름,39헤븐리 / 일본중계: 44소계
-  let krSukRate=50, krHevRate=50, jpSukRate=40, jpImxRate=60;
-  let krActorA=0, krActorB=0, jpActorA=0, jpActorB=0;
-  let krSuk=0, krHev=0, krVodSuk=0, krVodHev=0, jpSuk=0, jpImx=0, jpVod=0;
-
-  table.rows.forEach((row, i) => {
-    const v = getCellValue(row, 2);
-    const r = i + 1;
-    if (r===5) krSukRate = v||50;
-    if (r===6) krHevRate = v||50;
-    if (r===8) jpSukRate = v||40;
-    if (r===9) jpImxRate = v||60;
-    if (r===12) krActorA = v||0;
-    if (r===13) krActorB = v||0;
-    if (r===17) jpActorA = v||0;
-    if (r===18) jpActorB = v||0;
-    if (r===23) krSuk = v||0;
-    if (r===24) krHev = v||0;
-    if (r===30) jpSuk = v||0;
-    if (r===31) jpImx = v||0;
-    if (r===38) krVodSuk = v||0;
-    if (r===39) krVodHev = v||0;
-    if (r===44) jpVod = v||0;
+    if (section.includes('게런티')&&section.includes('일본')) {
+      if (c1==='한지우') d.jpActorA=c2;
+      if (c1==='조윤') d.jpActorB=c2;
+    }
+    if (section.includes('자동계산')&&section.includes('한국')) {
+      if (c1==='석필름 배분') d.krSuk=c2;
+      if (c1==='헤븐리 배분') d.krHev=c2;
+      if (c1.includes('중계')&&c1.includes('석필름')) d.krVodSuk=c2;
+      if (c1.includes('중계')&&c1.includes('헤븐리')) d.krVodHev=c2;
+    }
+    if (section.includes('자동계산')&&section.includes('일본')) {
+      if (c1==='석필름 배분') d.jpSuk=c2;
+      if (c1==='IMX 배분') d.jpImx=c2;
+    }
+    if (section.includes('중계')&&section.includes('한국')) {
+      if (c1==='석필름') d.krVodSuk=c2;
+      if (c1==='헤븐리') d.krVodHev=c2;
+    }
+    if (section.includes('중계')&&section.includes('일본')) {
+      if (c1.includes('소계')) d.jpVod=c2;
+    }
   });
 
-  document.getElementById('dist-kr-suk').textContent = fmtWon(krSuk);
-  document.getElementById('dist-kr-hev').textContent = fmtWon(krHev);
-  document.getElementById('dist-kr-vod-suk').textContent = fmtWon(krVodSuk);
-  document.getElementById('dist-kr-vod-hev').textContent = fmtWon(krVodHev);
-  document.getElementById('dist-kr-actor-a').textContent = fmtWon(krActorA);
-  document.getElementById('dist-kr-actor-b').textContent = fmtWon(krActorB);
-  document.getElementById('dist-kr-ratio').textContent = `${krSukRate} : ${krHevRate}`;
+  const grid = document.createElement('div');
+  grid.className = 'summary-cards';
 
-  document.getElementById('dist-jp-suk').textContent = fmtWon(jpSuk);
-  document.getElementById('dist-jp-imx').textContent = fmtWon(jpImx);
-  document.getElementById('dist-jp-vod').textContent = fmtWon(jpVod);
-  document.getElementById('dist-jp-actor-a').textContent = fmtWon(jpActorA);
-  document.getElementById('dist-jp-actor-b').textContent = fmtWon(jpActorB);
-  document.getElementById('dist-jp-ratio').textContent = `${jpSukRate} : ${jpImxRate}`;
+  // 한국 카드
+  const kr = makeCard('한국 (헤븐리)', 'kr', [
+    ['석필름', d.krSuk],
+    ['헤븐리', d.krHev],
+    ['중계/VOD 석필름', d.krVodSuk],
+    ['중계/VOD 헤븐리', d.krVodHev],
+    ['한지우', d.krActorA],
+    ['조윤', d.krActorB],
+  ], `배분 ${d.krSukRate||50} : ${d.krHevRate||50}`);
+
+  // 일본 카드
+  const jp = makeCard('일본 (IMX) - 와테라스', 'jp2', [
+    ['석필름', d.jpSuk],
+    ['IMX', d.jpImx],
+    ['중계/VOD (석필름 단독)', d.jpVod],
+    ['한지우', d.jpActorA],
+    ['조윤', d.jpActorB],
+  ], `배분 ${d.jpSukRate||50} : ${d.jpImxRate||50}`);
+
+  grid.appendChild(kr);
+  grid.appendChild(jp);
+  area.appendChild(grid);
+
+  const note = document.createElement('p');
+  note.className = 'note';
+  note.textContent = '※ 배분 비율·배우 게런티는 스프레드시트 수익배분 탭에서 수정';
+  area.appendChild(note);
 }
 
-// Collapsible sections
+function makeCard(title, cls, items, subtitle) {
+  const card = document.createElement('div');
+  card.className = `card ${cls}`;
+  const h3 = document.createElement('h3');
+  h3.textContent = title;
+  card.appendChild(h3);
+
+  items.forEach(([label, value]) => {
+    const row = document.createElement('div');
+    row.className = 'card-row';
+    row.innerHTML = `<span>${label}</span><span class="amount">${fmtWon(value||0)}</span>`;
+    card.appendChild(row);
+  });
+
+  if (subtitle) {
+    const sub = document.createElement('div');
+    sub.className = 'card-row sub';
+    sub.innerHTML = `<span>${subtitle}</span>`;
+    card.appendChild(sub);
+  }
+  return card;
+}
+
+// Collapsible
 document.querySelectorAll('.detail-section h2').forEach(h2 => {
   h2.addEventListener('click', () => {
-    const section = h2.parentElement;
-    const container = section.querySelector('[id$="-container"]');
-    if (container) {
-      container.style.display = container.style.display === 'none' ? 'block' : 'none';
-      section.classList.toggle('open');
-    }
+    const el = h2.nextElementSibling;
+    if (el) { el.style.display = el.style.display==='none'?'block':'none'; }
   });
 });
 
 async function refreshData() {
-  document.getElementById('last-update').textContent = '데이터 로딩 중...';
+  document.getElementById('last-update').textContent = '로딩 중...';
   await fetchExchangeRate();
 
-  const [krData, jpData, mdData, distData] = await Promise.all([
-    fetchSheetData('한국_견적'),
-    fetchSheetData('일본_견적_와테라스'),
-    fetchSheetData('MD_판매'),
-    fetchSheetData('수익배분'),
+  const [kr, jp, md, dist, dash] = await Promise.all([
+    fetchSheet('한국_견적'),
+    fetchSheet('일본_견적_와테라스'),
+    fetchSheet('MD_판매'),
+    fetchSheet('수익배분'),
+    fetchSheet('종합_대시보드'),
   ]);
 
-  renderKoreaTable(krData);
-  renderJapanTable(jpData);
-  renderMDTable(mdData);
-
-  // 한국 순이익 = 티켓 + MD - 제작비
-  const krCost = parseFloat((document.getElementById('kr-cost').textContent).replace(/[₩,\-]/g,''))||0;
-  const krTicket = parseFloat((document.getElementById('kr-ticket').textContent).replace(/[₩,\-]/g,''))||0;
-  const krMd = parseFloat((document.getElementById('kr-md').textContent).replace(/[₩,\-]/g,''))||0;
-  document.getElementById('kr-profit').textContent = fmtWon(krTicket + krMd - krCost);
-
-  renderDistribution(distData);
+  renderDashboard(dash);
+  renderDistribution(dist);
+  renderTable(kr, document.getElementById('kr-detail'));
+  renderTable(jp, document.getElementById('jp-detail'));
+  renderTable(md, document.getElementById('md-detail'));
 
   document.getElementById('last-update').textContent = `마지막 업데이트: ${new Date().toLocaleString('ko-KR')}`;
 }
