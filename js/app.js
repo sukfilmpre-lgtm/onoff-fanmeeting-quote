@@ -202,30 +202,65 @@ function renderMDTable(table) {
   document.getElementById('kr-md').textContent = fmtWon(krMdTotal);
 }
 
-function updateTotals(jp1Share, jp2Share, jp1Profit, jp2Profit, actorFee) {
+function updateTotals(distData) {
   const krCostEl = document.getElementById('kr-cost').textContent;
   const krMdEl = document.getElementById('kr-md').textContent;
-
   const krCost = parseFloat(krCostEl.replace(/[₩,\-]/g, '')) || 0;
   const krMd = parseFloat(krMdEl.replace(/[₩,\-]/g, '')) || 0;
   const krProfit = krMd - krCost;
-
   document.getElementById('kr-profit').textContent = fmtWon(krProfit);
   if (krProfit < 0) document.getElementById('kr-profit').classList.add('negative');
+}
 
-  // 석필름 = 한국 순이익 + 일본 50%
-  const sukOmo = krProfit + (jp1Share || 0);
-  const sukWat = krProfit + (jp2Share || 0);
-  // IMX = 일본 50%
-  const imxOmo = jp1Share || 0;
-  const imxWat = jp2Share || 0;
+function renderDistribution(table) {
+  if (!table) return;
+  // Parse distribution sheet data
+  let krSukRate = 70, krHevRate = 30, jpSukRate = 50, jpImxRate = 50;
+  let actorA = 0, actorB = 0, actorC = 0, actorTotal = 0;
+  let krSuk = 0, krHev = 0;
+  let omoSuk = 0, omoImx = 0, watSuk = 0, watImx = 0;
+  let finalKr = 0, finalOmo = 0, finalWat = 0, totalOmo = 0, totalWat = 0;
 
-  document.getElementById('total-omo-suk').textContent = fmtWon(sukOmo);
-  document.getElementById('total-wat-suk').textContent = fmtWon(sukWat);
-  document.getElementById('total-omo-imx').textContent = fmtWon(imxOmo);
-  document.getElementById('total-wat-imx').textContent = fmtWon(imxWat);
-  document.getElementById('total-omo-actor').textContent = fmtWon(actorFee);
-  document.getElementById('total-wat-actor').textContent = fmtWon(actorFee);
+  table.rows.forEach((row, i) => {
+    const col1 = getCellValue(row, 1) || '';
+    const col2 = getCellValue(row, 2);
+    const rowNum = i + 1;
+
+    if (rowNum === 4) krSukRate = col2 || 70;
+    if (rowNum === 5) krHevRate = col2 || 30;
+    if (rowNum === 7) jpSukRate = col2 || 50;
+    if (rowNum === 8) jpImxRate = col2 || 50;
+    if (rowNum === 10) actorA = col2 || 0;
+    if (rowNum === 11) actorB = col2 || 0;
+    if (rowNum === 12) actorC = col2 || 0;
+    if (rowNum === 13) actorTotal = col2 || 0;
+    // 자동계산 영역
+    if (rowNum === 18) krSuk = col2 || 0;   // 석필름 한국배분
+    if (rowNum === 19) krHev = col2 || 0;   // 헤븐리 배분
+    if (rowNum === 23) omoSuk = col2 || 0;  // 석필름 오모테산도
+    if (rowNum === 24) omoImx = col2 || 0;  // IMX 오모테산도
+    if (rowNum === 28) watSuk = col2 || 0;  // 석필름 와테라스
+    if (rowNum === 29) watImx = col2 || 0;  // IMX 와테라스
+    if (rowNum === 35) totalOmo = col2 || 0;
+    if (rowNum === 36) totalWat = col2 || 0;
+  });
+
+  // 오모테산도 기준
+  document.getElementById('dist-omo-suk').textContent = fmtWon(krSuk + omoSuk);
+  document.getElementById('dist-omo-hev').textContent = fmtWon(krHev);
+  document.getElementById('dist-omo-imx').textContent = fmtWon(omoImx);
+  document.getElementById('dist-omo-actor').textContent = fmtWon(actorTotal);
+
+  // 와테라스 기준
+  document.getElementById('dist-wat-suk').textContent = fmtWon(krSuk + watSuk);
+  document.getElementById('dist-wat-hev').textContent = fmtWon(krHev);
+  document.getElementById('dist-wat-imx').textContent = fmtWon(watImx);
+  document.getElementById('dist-wat-actor').textContent = fmtWon(actorTotal);
+
+  // 비율 표시
+  document.getElementById('dist-kr-ratio').textContent = `${krSukRate} : ${krHevRate}`;
+  document.getElementById('dist-jp-ratio').textContent = `${jpSukRate} : ${jpImxRate}`;
+  document.getElementById('dist-actor-total').textContent = fmtWon(actorTotal);
 }
 
 // Collapsible sections
@@ -245,18 +280,20 @@ async function refreshData() {
 
   await fetchExchangeRate();
 
-  const [krData, jp1Data, jp2Data, mdData] = await Promise.all([
+  const [krData, jp1Data, jp2Data, mdData, distData] = await Promise.all([
     fetchSheetData('한국_견적'),
     fetchSheetData('일본_견적_오모테산도'),
     fetchSheetData('일본_견적_와테라스'),
     fetchSheetData('MD_판매'),
+    fetchSheetData('수익배분'),
   ]);
 
-  const actorFee = renderKoreaTable(krData);
-  const jp1 = renderJapanTable(jp1Data, 'jp1-tbody', 'jp1');
-  const jp2 = renderJapanTable(jp2Data, 'jp2-tbody', 'jp2');
+  renderKoreaTable(krData);
+  renderJapanTable(jp1Data, 'jp1-tbody', 'jp1');
+  renderJapanTable(jp2Data, 'jp2-tbody', 'jp2');
   renderMDTable(mdData);
-  updateTotals(jp1.share, jp2.share, jp1.profit, jp2.profit, actorFee);
+  updateTotals();
+  renderDistribution(distData);
 
   const now = new Date().toLocaleString('ko-KR');
   document.getElementById('last-update').textContent = `마지막 업데이트: ${now}`;

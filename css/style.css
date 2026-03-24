@@ -96,13 +96,12 @@ main { max-width: 1080px; margin: 0 auto; padding: 28px 20px 60px; }
 }
 .card-row.total span:first-child { color: var(--text-primary); }
 .card-row.share {
-  color: var(--accent); font-weight: 600; border-bottom: none;
-  font-size: 15px;
+  color: var(--text-secondary); font-weight: 500; border-bottom: none;
 }
-.card-row.share span:first-child { color: var(--accent); }
 .amount { font-variant-numeric: tabular-nums; font-weight: 500; color: var(--text-primary); }
 
 /* Breakdown Cards */
+.three-col { grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
 .breakdown-card h3::before { content: ''; display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--text-secondary); margin-right: 8px; vertical-align: middle; }
 .card-row.sub {
   border-bottom: none; padding: 0 0 8px 0; margin-top: -6px;
