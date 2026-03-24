@@ -106,9 +106,14 @@ function init() {
     });
 
     var videoCost = document.getElementById('chk-video').checked ? 5000000 : 0;
+    var useRS = document.getElementById('chk-rs').checked;
     var sukKr = (D.kSuk||0) + (D.kvs||0);
     var sukJp = (D.jSuk||0) + (D.jv||0);
-    var sukTotal = sukKr + sukJp - videoCost;
+    // RS: 석필름 순이익의 5%/인 (2명) = 10%를 석필름에서 차감
+    var rsKr = useRS ? sukKr * 0.05 : 0;  // 인당 5%
+    var rsJp = useRS ? sukJp * 0.05 : 0;
+    var rsTotal = (rsKr + rsJp) * 2;  // 2명분
+    var sukTotal = sukKr + sukJp - videoCost - rsTotal;
     var hevTotal = (D.kHev||0) + (D.kvh||0);
     var imxTotal = (D.jImx||0);
     var a1Kr = (D.ka1||0), a1Jp = (D.ja1||0), a1Total = a1Kr + a1Jp;
@@ -143,6 +148,9 @@ function init() {
     if (videoCost > 0) {
       dh += '<div class="total-row"><span>영상제작비</span><span>-' + fw(videoCost) + '</span></div>';
     }
+    if (useRS) {
+      dh += '<div class="total-row"><span>배우 RS (5%x2명)</span><span>-' + fw(rsTotal) + '</span></div>';
+    }
     dh += '<div class="total-row sum"><span>합계</span><span>' + fw(sukTotal) + '</span></div>';
     dh += '</div>';
 
@@ -156,17 +164,25 @@ function init() {
     // 한지우
     dh += '<div class="total-col">';
     dh += '<div class="total-label">한지우</div>';
-    dh += '<div class="total-row"><span>한국</span><span>' + fw(a1Kr) + '</span></div>';
-    dh += '<div class="total-row"><span>일본</span><span>' + fw(a1Jp) + '</span></div>';
-    dh += '<div class="total-row sum"><span>합계</span><span>' + fw(a1Total) + '</span></div>';
+    dh += '<div class="total-row"><span>한국 (고정)</span><span>' + fw(a1Kr) + '</span></div>';
+    dh += '<div class="total-row"><span>일본 (고정)</span><span>' + fw(a1Jp) + '</span></div>';
+    if (useRS) {
+      dh += '<div class="total-row"><span>RS 한국 (5%)</span><span>' + fw(rsKr) + '</span></div>';
+      dh += '<div class="total-row"><span>RS 일본 (5%)</span><span>' + fw(rsJp) + '</span></div>';
+    }
+    dh += '<div class="total-row sum"><span>합계</span><span>' + fw(a1Total + (useRS ? rsKr + rsJp : 0)) + '</span></div>';
     dh += '</div>';
 
     // 조윤
     dh += '<div class="total-col">';
     dh += '<div class="total-label">조윤</div>';
-    dh += '<div class="total-row"><span>한국</span><span>' + fw(a2Kr) + '</span></div>';
-    dh += '<div class="total-row"><span>일본</span><span>' + fw(a2Jp) + '</span></div>';
-    dh += '<div class="total-row sum"><span>합계</span><span>' + fw(a2Total) + '</span></div>';
+    dh += '<div class="total-row"><span>한국 (고정)</span><span>' + fw(a2Kr) + '</span></div>';
+    dh += '<div class="total-row"><span>일본 (고정)</span><span>' + fw(a2Jp) + '</span></div>';
+    if (useRS) {
+      dh += '<div class="total-row"><span>RS 한국 (5%)</span><span>' + fw(rsKr) + '</span></div>';
+      dh += '<div class="total-row"><span>RS 일본 (5%)</span><span>' + fw(rsJp) + '</span></div>';
+    }
+    dh += '<div class="total-row sum"><span>합계</span><span>' + fw(a2Total + (useRS ? rsKr + rsJp : 0)) + '</span></div>';
     dh += '</div>';
 
     dh += '</div></div>';
