@@ -219,6 +219,10 @@ function tbl(rows, type) {
     if (a.startsWith('[')) {
       jpSection = a;
       h += '<tr><td colspan="' + cells.length + '" class="sec">' + a + '</td></tr>';
+      // 일본 수익 요약 섹션 뒤에 헤더 행 삽입
+      if (type === 'jp' && a.indexOf('수익 요약') >= 0) {
+        h += '<tr class="th"><td>항목</td><td>엔화(¥)</td><td></td><td></td><td>원화(₩)</td><td></td></tr>';
+      }
       return;
     }
     var isH = ['구분','항목','좌석 종류','상품명'].indexOf(a) >= 0 ||
