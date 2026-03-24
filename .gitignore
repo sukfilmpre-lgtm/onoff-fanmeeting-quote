@@ -1,0 +1,5 @@
+sheets-setup/
+.DS_Store
+*.pdf
+*.xlsx
+sheet_id.txt
