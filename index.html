@@ -17,32 +17,25 @@
   </header>
 
   <main>
-    <!-- 종합 요약 -->
     <section class="summary-section">
       <h2>종합 수익 요약</h2>
       <div class="summary-cards">
         <div class="card kr">
-          <h3>한국 (헤븐리)</h3>
+          <h3>한국 (헤븐리) - 성암아트홀 200석</h3>
           <div class="card-row"><span>제작비(VAT포함)</span><span id="kr-cost" class="amount">-</span></div>
           <div class="card-row"><span>MD 수익</span><span id="kr-md" class="amount">-</span></div>
           <div class="card-row total"><span>순이익</span><span id="kr-profit" class="amount">-</span></div>
         </div>
-        <div class="card jp1">
-          <h3>일본 (IMX) - 오모테산도 150석</h3>
-          <div class="card-row"><span>총 수입</span><span id="jp1-income" class="amount">-</span></div>
-          <div class="card-row"><span>총 지출</span><span id="jp1-expense" class="amount">-</span></div>
-          <div class="card-row total"><span>이익</span><span id="jp1-profit" class="amount">-</span></div>
-        </div>
         <div class="card jp2">
           <h3>일본 (IMX) - 와테라스 160석</h3>
-          <div class="card-row"><span>총 수입</span><span id="jp2-income" class="amount">-</span></div>
-          <div class="card-row"><span>총 지출</span><span id="jp2-expense" class="amount">-</span></div>
-          <div class="card-row total"><span>이익</span><span id="jp2-profit" class="amount">-</span></div>
+          <div class="card-row"><span>총 수입</span><span id="jp-income" class="amount">-</span></div>
+          <div class="card-row"><span>총 지출</span><span id="jp-expense" class="amount">-</span></div>
+          <div class="card-row total"><span>이익</span><span id="jp-profit" class="amount">-</span></div>
         </div>
       </div>
-      <!-- 수익 배분 -->
+
       <h2>수익 배분</h2>
-      <div class="summary-cards three-col">
+      <div class="summary-cards">
         <div class="card kr">
           <h3>한국 (헤븐리)</h3>
           <div class="card-row"><span>석필름</span><span id="dist-kr-suk" class="amount">-</span></div>
@@ -51,27 +44,18 @@
           <div class="card-row"><span>조윤</span><span id="dist-kr-actor-b" class="amount">-</span></div>
           <div class="card-row sub"><span>배분 비율 <span id="dist-kr-ratio">-</span></span></div>
         </div>
-        <div class="card jp1">
-          <h3>일본 (IMX) - 오모테산도</h3>
-          <div class="card-row"><span>석필름</span><span id="dist-omo-suk" class="amount">-</span></div>
-          <div class="card-row"><span>IMX</span><span id="dist-omo-imx" class="amount">-</span></div>
-          <div class="card-row"><span>한지우</span><span id="dist-jp-actor-a" class="amount">-</span></div>
-          <div class="card-row"><span>조윤</span><span id="dist-jp-actor-b" class="amount">-</span></div>
-          <div class="card-row sub"><span>배분 비율 <span id="dist-jp-ratio-omo">-</span></span></div>
-        </div>
         <div class="card jp2">
           <h3>일본 (IMX) - 와테라스</h3>
-          <div class="card-row"><span>석필름</span><span id="dist-wat-suk" class="amount">-</span></div>
-          <div class="card-row"><span>IMX</span><span id="dist-wat-imx" class="amount">-</span></div>
-          <div class="card-row"><span>한지우</span><span id="dist-jp2-actor-a" class="amount">-</span></div>
-          <div class="card-row"><span>조윤</span><span id="dist-jp2-actor-b" class="amount">-</span></div>
-          <div class="card-row sub"><span>배분 비율 <span id="dist-jp-ratio-wat">-</span></span></div>
+          <div class="card-row"><span>석필름</span><span id="dist-jp-suk" class="amount">-</span></div>
+          <div class="card-row"><span>IMX</span><span id="dist-jp-imx" class="amount">-</span></div>
+          <div class="card-row"><span>한지우</span><span id="dist-jp-actor-a" class="amount">-</span></div>
+          <div class="card-row"><span>조윤</span><span id="dist-jp-actor-b" class="amount">-</span></div>
+          <div class="card-row sub"><span>배분 비율 <span id="dist-jp-ratio">-</span></span></div>
         </div>
       </div>
       <div class="card-row sub" style="padding:8px 0"><span>※ 배분 비율·배우 게런티는 스프레드시트 '수익배분' 탭에서 수정</span></div>
     </section>
 
-    <!-- 한국 (헤븐리) 견적 상세 -->
     <section class="detail-section">
       <h2>한국 (헤븐리) 견적 상세</h2>
       <div id="kr-table-container">
@@ -82,29 +66,16 @@
       </div>
     </section>
 
-    <!-- 일본 오모테산도 견적 -->
     <section class="detail-section">
-      <h2>일본 (IMX) 견적 - 오모테산도GROUND 150석</h2>
-      <div id="jp1-table-container">
-        <table id="jp1-table" class="data-table">
+      <h2>일본 (IMX) 견적 - 와테라스 160석</h2>
+      <div id="jp-table-container">
+        <table id="jp-table" class="data-table">
           <thead><tr><th>항목</th><th>단가/가격</th><th>수량</th><th>금액(¥)</th><th>금액(₩)</th></tr></thead>
-          <tbody id="jp1-tbody"></tbody>
+          <tbody id="jp-tbody"></tbody>
         </table>
       </div>
     </section>
 
-    <!-- 일본 와테라스 견적 -->
-    <section class="detail-section">
-      <h2>일본 (IMX) 견적 - 와테라스코몬홀 160석</h2>
-      <div id="jp2-table-container">
-        <table id="jp2-table" class="data-table">
-          <thead><tr><th>항목</th><th>단가/가격</th><th>수량</th><th>금액(¥)</th><th>금액(₩)</th></tr></thead>
-          <tbody id="jp2-tbody"></tbody>
-        </table>
-      </div>
-    </section>
-
-    <!-- MD 판매 -->
     <section class="detail-section">
       <h2>MD 판매</h2>
       <div id="md-table-container">
