@@ -135,21 +135,22 @@ function renderMDTable(table) {
 
 function renderDistribution(table) {
   if (!table) return;
-  // Row map: 비율5-9, 한국게런티12-14, 일본게런티17-19, 한국계산22-24, 와테라스27-29
-  let krSukRate=70, krHevRate=30, jpSukRate=50, jpImxRate=50;
+  // Row map from current spreadsheet (verified)
+  // 비율: 5,6,8,9 / 한국게런티: 12,13,14 / 일본게런티: 17,18,19
+  // 한국자동: 23석필름,24헤븐리,25중계석필름,26중계헤븐리
+  // 일본자동: 30석필름,31IMX
+  // 한국중계: 38석필름,39헤븐리 / 일본중계: 44소계
+  let krSukRate=50, krHevRate=50, jpSukRate=40, jpImxRate=60;
   let krActorA=0, krActorB=0, jpActorA=0, jpActorB=0;
   let krSuk=0, krHev=0, krVodSuk=0, krVodHev=0, jpSuk=0, jpImx=0, jpVod=0;
 
   table.rows.forEach((row, i) => {
     const v = getCellValue(row, 2);
     const r = i + 1;
-    // 비율: 5,6,8,9 / 한국게런티: 12,13 / 일본게런티: 17,18
-    // 한국자동: 23,24 / 한국VOD: 25(이전) → 38,39
-    // 일본자동: 30,31 / 일본VOD: 42
-    if (r===5) krSukRate = v||70;
-    if (r===6) krHevRate = v||30;
-    if (r===8) jpSukRate = v||50;
-    if (r===9) jpImxRate = v||50;
+    if (r===5) krSukRate = v||50;
+    if (r===6) krHevRate = v||50;
+    if (r===8) jpSukRate = v||40;
+    if (r===9) jpImxRate = v||60;
     if (r===12) krActorA = v||0;
     if (r===13) krActorB = v||0;
     if (r===17) jpActorA = v||0;
