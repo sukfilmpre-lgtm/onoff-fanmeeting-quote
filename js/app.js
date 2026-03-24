@@ -22,7 +22,7 @@ async function fetchExchangeRate() {
 }
 
 async function fetchSheet(name) {
-  const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(name)}`;
+  const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&headers=0&sheet=${encodeURIComponent(name)}`;
   try {
     const res = await fetch(url);
     const txt = await res.text();
