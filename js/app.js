@@ -104,18 +104,36 @@ function init() {
       }
     });
 
+    // 석필름 총수익 = 한국(석필름배분+중계석필름) + 일본(석필름배분+중계단독)
+    var sukTotal = (D.kSuk||0) + (D.kvs||0) + (D.jSuk||0) + (D.jv||0);
+    var actorTotal = (D.ka1||0) + (D.ka2||0) + (D.ja1||0) + (D.ja2||0);
+
     var dh = '<div class="grid">';
-    dh += makeDistCard('한국 (헤븐리)', 'orange', [
-      ['석필름', D.kSuk], ['헤븐리', D.kHev],
-      ['중계/VOD 석필름', D.kvs], ['중계/VOD 헤븐리', D.kvh],
-      ['한지우', D.ka1], ['조윤', D.ka2]
+    dh += makeDistCard('한국 수익 배분', 'orange', [
+      ['석필름 (제작사)', D.kSuk],
+      ['헤븐리 (대행사)', D.kHev],
+      ['중계/VOD 석필름', D.kvs],
+      ['중계/VOD 헤븐리', D.kvh],
+      ['한지우 (배우)', D.ka1],
+      ['조윤 (배우)', D.ka2]
     ], '배분 ' + (D.ks || 50) + ' : ' + (D.kh || 50));
-    dh += makeDistCard('일본 (IMX) - 와테라스', 'green', [
-      ['석필름', D.jSuk], ['IMX', D.jImx],
+    dh += makeDistCard('일본 수익 배분', 'green', [
+      ['석필름 (제작사)', D.jSuk],
+      ['IMX (대행사)', D.jImx],
       ['중계/VOD (석필름 단독)', D.jv],
-      ['한지우', D.ja1], ['조윤', D.ja2]
+      ['한지우 (배우)', D.ja1],
+      ['조윤 (배우)', D.ja2]
     ], '배분 ' + (D.js || 50) + ' : ' + (D.ji || 50));
-    dh += '</div><p class="note">※ 배분 비율·배우 게런티는 스프레드시트 수익배분 탭에서 수정</p>';
+    dh += '</div>';
+
+    // 석필름 + 배우 총합
+    dh += '<div class="total-box">';
+    dh += '<div class="total-label">석필름 총 수익 (한국+일본)</div>';
+    dh += '<div class="total-amount">' + fw(sukTotal) + '</div>';
+    dh += '<div class="total-sub">배우 총 게런티: ' + fw(actorTotal) + '</div>';
+    dh += '</div>';
+
+    dh += '<p class="note">※ 배분 비율·배우 게런티는 스프레드시트 수익배분 탭에서 수정</p>';
     document.getElementById('dist').innerHTML = dh;
 
     // 상세 테이블

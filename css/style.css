@@ -33,6 +33,11 @@ main>h2:first-child{margin-top:0}
 .sub{font-size:11px;color:#aeaeb2;margin-top:4px}
 .note{font-size:11px;color:#aeaeb2;margin-top:10px}
 
+.total-box{background:#1d1d1f;border-radius:16px;padding:28px;margin-top:12px;text-align:center;color:#fff}
+.total-label{font-size:13px;font-weight:600;color:#aeaeb2;letter-spacing:.02em;margin-bottom:8px}
+.total-amount{font-size:32px;font-weight:700;letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+.total-sub{font-size:14px;color:#aeaeb2;margin-top:10px;font-weight:500}
+
 .toggle{background:#fff;border-radius:16px;border:1px solid rgba(0,0,0,.04);margin-bottom:10px;overflow:hidden}
 .toggle h2{font-size:15px;font-weight:600;padding:18px 24px;cursor:pointer;user-select:none}
 .toggle h2::before{content:'▸ ';color:#aeaeb2}
