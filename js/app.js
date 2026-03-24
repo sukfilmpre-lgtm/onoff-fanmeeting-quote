@@ -212,10 +212,12 @@ function makeDistCard(title, cls, items, sub) {
 
 function tbl(rows, type) {
   var h = '<table>';
+  var jpSection = '';
   rows.forEach(function(cells) {
     if (!cells || cells.every(function(c) { return c == null; })) return;
     var a = String(cells[0] || ''), b = String(cells[1] || '');
     if (a.startsWith('[')) {
+      jpSection = a;
       h += '<tr><td colspan="' + cells.length + '" class="sec">' + a + '</td></tr>';
       return;
     }
@@ -230,7 +232,9 @@ function tbl(rows, type) {
       // 일본 시트: 빈 헤더 칼럼에 단위 채우기
       if (type === 'jp') {
         if (a === '좌석 종류') cells = ['좌석 종류','가격(¥)','매수','금액(¥)','금액(₩)',''];
-        if (a === '항목' && cells.length >= 5) cells = ['항목','단위','횟수','단가(¥)','합계(¥)','합계(₩)'];
+        if (a === '항목' && jpSection.indexOf('지출A') >= 0) cells = ['항목','금액(¥)','','','금액(₩)',''];
+        if (a === '항목' && jpSection.indexOf('지출B') >= 0) cells = ['항목','단위','횟수','단가(¥)','합계(¥)','합계(₩)'];
+        if (a === '항목' && jpSection.indexOf('수익') >= 0) cells = ['','엔화(¥)','','','원화(₩)',''];
       }
       h += '<tr class="th">' + cells.map(function(c) { return '<td>' + (c || '') + '</td>'; }).join('') + '</tr>';
     } else {
