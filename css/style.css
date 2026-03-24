@@ -43,8 +43,8 @@ table{width:100%;border-collapse:collapse;font-size:12px}
 td{padding:7px 10px;border-bottom:.5px solid rgba(0,0,0,.04)}
 .r{text-align:right;font-variant-numeric:tabular-nums}
 .sec{font-weight:600;font-size:13px;background:#f5f5f7;color:#1d1d1f;padding:10px;border-bottom:1px solid rgba(0,0,0,.06)}
-tr.sub td{background:#f5f5f7;font-weight:600}
-tr.profit td{background:#e8f5e9;font-weight:700}
+tr.sub td{background:#e8e8ed;font-weight:700;color:#1d1d1f;font-size:13px}
+tr.profit td{background:#1d1d1f;font-weight:700;color:#fff;font-size:13px}
 
 footer{text-align:center;padding:20px;font-size:11px;color:#aeaeb2}
 footer a{color:#0071e3;text-decoration:none}

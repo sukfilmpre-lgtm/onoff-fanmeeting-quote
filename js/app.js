@@ -54,7 +54,7 @@ function init() {
         return;
       }
       if (skip || !card) return;
-      if (a === '항목' || a.startsWith('on&off') || a === '적용 환율' || a === '환율 기준일' || a === '중계/VOD 석필름' || a === '중계/VOD 헤븐리' || a === '석필름' || a === '대행사' || a === '배우 게런티') return;
+      if (a === '항목' || a.startsWith('on&off') || a === '적용 환율' || a === '환율 기준일') return;
 
       var isTotal = a.includes('순이익') || a === '이익';
       var val;
