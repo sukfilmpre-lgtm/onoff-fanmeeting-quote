@@ -104,9 +104,13 @@ function init() {
       }
     });
 
-    // 석필름 총수익 = 한국(석필름배분+중계석필름) + 일본(석필름배분+중계단독)
-    var sukTotal = (D.kSuk||0) + (D.kvs||0) + (D.jSuk||0) + (D.jv||0);
-    var actorTotal = (D.ka1||0) + (D.ka2||0) + (D.ja1||0) + (D.ja2||0);
+    var sukKr = (D.kSuk||0) + (D.kvs||0);
+    var sukJp = (D.jSuk||0) + (D.jv||0);
+    var sukTotal = sukKr + sukJp;
+    var hevTotal = (D.kHev||0) + (D.kvh||0);
+    var imxTotal = (D.jImx||0);
+    var a1Kr = (D.ka1||0), a1Jp = (D.ja1||0), a1Total = a1Kr + a1Jp;
+    var a2Kr = (D.ka2||0), a2Jp = (D.ja2||0), a2Total = a2Kr + a2Jp;
 
     var dh = '<div class="grid">';
     dh += makeDistCard('한국 수익 배분', 'orange', [
@@ -126,12 +130,41 @@ function init() {
     ], '배분 ' + (D.js || 50) + ' : ' + (D.ji || 50));
     dh += '</div>';
 
-    // 석필름 + 배우 총합
     dh += '<div class="total-box">';
-    dh += '<div class="total-label">석필름 총 수익 (한국+일본)</div>';
-    dh += '<div class="total-amount">' + fw(sukTotal) + '</div>';
-    dh += '<div class="total-sub">배우 총 게런티: ' + fw(actorTotal) + '</div>';
+    dh += '<div class="total-grid">';
+
+    // 석필름
+    dh += '<div class="total-col">';
+    dh += '<div class="total-label">석필름 (제작사)</div>';
+    dh += '<div class="total-row"><span>한국</span><span>' + fw(sukKr) + '</span></div>';
+    dh += '<div class="total-row"><span>일본</span><span>' + fw(sukJp) + '</span></div>';
+    dh += '<div class="total-row sum"><span>합계</span><span>' + fw(sukTotal) + '</span></div>';
     dh += '</div>';
+
+    // 대행사
+    dh += '<div class="total-col">';
+    dh += '<div class="total-label">대행사</div>';
+    dh += '<div class="total-row"><span>헤븐리 (한국)</span><span>' + fw(hevTotal) + '</span></div>';
+    dh += '<div class="total-row"><span>IMX (일본)</span><span>' + fw(imxTotal) + '</span></div>';
+    dh += '</div>';
+
+    // 한지우
+    dh += '<div class="total-col">';
+    dh += '<div class="total-label">한지우</div>';
+    dh += '<div class="total-row"><span>한국</span><span>' + fw(a1Kr) + '</span></div>';
+    dh += '<div class="total-row"><span>일본</span><span>' + fw(a1Jp) + '</span></div>';
+    dh += '<div class="total-row sum"><span>합계</span><span>' + fw(a1Total) + '</span></div>';
+    dh += '</div>';
+
+    // 조윤
+    dh += '<div class="total-col">';
+    dh += '<div class="total-label">조윤</div>';
+    dh += '<div class="total-row"><span>한국</span><span>' + fw(a2Kr) + '</span></div>';
+    dh += '<div class="total-row"><span>일본</span><span>' + fw(a2Jp) + '</span></div>';
+    dh += '<div class="total-row sum"><span>합계</span><span>' + fw(a2Total) + '</span></div>';
+    dh += '</div>';
+
+    dh += '</div></div>';
 
     dh += '<p class="note">※ 배분 비율·배우 게런티는 스프레드시트 수익배분 탭에서 수정</p>';
     document.getElementById('dist').innerHTML = dh;
