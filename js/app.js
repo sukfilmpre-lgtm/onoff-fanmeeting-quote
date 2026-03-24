@@ -214,53 +214,45 @@ function updateTotals(distData) {
 
 function renderDistribution(table) {
   if (!table) return;
-  // Parse distribution sheet data
   let krSukRate = 70, krHevRate = 30, jpSukRate = 50, jpImxRate = 50;
   let actorA = 0, actorB = 0, actorC = 0, actorTotal = 0;
   let krSuk = 0, krHev = 0;
   let omoSuk = 0, omoImx = 0, watSuk = 0, watImx = 0;
-  let finalKr = 0, finalOmo = 0, finalWat = 0, totalOmo = 0, totalWat = 0;
 
   table.rows.forEach((row, i) => {
-    const col1 = getCellValue(row, 1) || '';
     const col2 = getCellValue(row, 2);
-    const rowNum = i + 1;
-
-    if (rowNum === 4) krSukRate = col2 || 70;
-    if (rowNum === 5) krHevRate = col2 || 30;
-    if (rowNum === 7) jpSukRate = col2 || 50;
-    if (rowNum === 8) jpImxRate = col2 || 50;
-    if (rowNum === 10) actorA = col2 || 0;
-    if (rowNum === 11) actorB = col2 || 0;
-    if (rowNum === 12) actorC = col2 || 0;
-    if (rowNum === 13) actorTotal = col2 || 0;
-    // 자동계산 영역
-    if (rowNum === 18) krSuk = col2 || 0;   // 석필름 한국배분
-    if (rowNum === 19) krHev = col2 || 0;   // 헤븐리 배분
-    if (rowNum === 23) omoSuk = col2 || 0;  // 석필름 오모테산도
-    if (rowNum === 24) omoImx = col2 || 0;  // IMX 오모테산도
-    if (rowNum === 28) watSuk = col2 || 0;  // 석필름 와테라스
-    if (rowNum === 29) watImx = col2 || 0;  // IMX 와테라스
-    if (rowNum === 35) totalOmo = col2 || 0;
-    if (rowNum === 36) totalWat = col2 || 0;
+    const r = i + 1;
+    if (r === 4) krSukRate = col2 || 70;
+    if (r === 5) krHevRate = col2 || 30;
+    if (r === 7) jpSukRate = col2 || 50;
+    if (r === 8) jpImxRate = col2 || 50;
+    if (r === 10) actorA = col2 || 0;
+    if (r === 11) actorB = col2 || 0;
+    if (r === 12) actorC = col2 || 0;
+    if (r === 13) actorTotal = col2 || 0;
+    if (r === 18) krSuk = col2 || 0;
+    if (r === 19) krHev = col2 || 0;
+    if (r === 23) omoSuk = col2 || 0;
+    if (r === 24) omoImx = col2 || 0;
+    if (r === 28) watSuk = col2 || 0;
+    if (r === 29) watImx = col2 || 0;
   });
 
-  // 오모테산도 기준
-  document.getElementById('dist-omo-suk').textContent = fmtWon(krSuk + omoSuk);
-  document.getElementById('dist-omo-hev').textContent = fmtWon(krHev);
-  document.getElementById('dist-omo-imx').textContent = fmtWon(omoImx);
-  document.getElementById('dist-omo-actor').textContent = fmtWon(actorTotal);
-
-  // 와테라스 기준
-  document.getElementById('dist-wat-suk').textContent = fmtWon(krSuk + watSuk);
-  document.getElementById('dist-wat-hev').textContent = fmtWon(krHev);
-  document.getElementById('dist-wat-imx').textContent = fmtWon(watImx);
-  document.getElementById('dist-wat-actor').textContent = fmtWon(actorTotal);
-
-  // 비율 표시
+  // 한국 - 석필름 / 헤븐리 / 배우
+  document.getElementById('dist-kr-suk').textContent = fmtWon(krSuk);
+  document.getElementById('dist-kr-hev').textContent = fmtWon(krHev);
+  document.getElementById('dist-kr-actor').textContent = fmtWon(actorTotal);
   document.getElementById('dist-kr-ratio').textContent = `${krSukRate} : ${krHevRate}`;
-  document.getElementById('dist-jp-ratio').textContent = `${jpSukRate} : ${jpImxRate}`;
-  document.getElementById('dist-actor-total').textContent = fmtWon(actorTotal);
+
+  // 일본 오모테산도 - 석필름 / IMX
+  document.getElementById('dist-omo-suk').textContent = fmtWon(omoSuk);
+  document.getElementById('dist-omo-imx').textContent = fmtWon(omoImx);
+  document.getElementById('dist-jp-ratio-omo').textContent = `${jpSukRate} : ${jpImxRate}`;
+
+  // 일본 와테라스 - 석필름 / IMX
+  document.getElementById('dist-wat-suk').textContent = fmtWon(watSuk);
+  document.getElementById('dist-wat-imx').textContent = fmtWon(watImx);
+  document.getElementById('dist-jp-ratio-wat').textContent = `${jpSukRate} : ${jpImxRate}`;
 }
 
 // Collapsible sections
