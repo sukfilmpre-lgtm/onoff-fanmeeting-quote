@@ -160,7 +160,7 @@ function renderDistribution(table) {
     if (r===31) jpImx = v||0;
     if (r===38) krVodSuk = v||0;
     if (r===39) krVodHev = v||0;
-    if (r===42) jpVod = v||0;
+    if (r===44) jpVod = v||0;
   });
 
   document.getElementById('dist-kr-suk').textContent = fmtWon(krSuk);
