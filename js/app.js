@@ -57,9 +57,10 @@ function renderKoreaTable(table) {
   tbody.innerHTML = '';
 
   let totalCost = 0;
+  let actorFee = 0;
 
   table.rows.forEach((row, i) => {
-    if (i < 2) return; // skip header rows
+    if (i < 2) return;
     const tr = document.createElement('tr');
     const col0 = getCellValue(row, 0) || '';
     const col1 = getCellValue(row, 1) || '';
@@ -82,13 +83,12 @@ function renderKoreaTable(table) {
       <td>${col6}</td>`;
     tbody.appendChild(tr);
 
-    if (col1 === '제작비 합계 (VAT포함)') totalCost = col5 || 0;
+    if (col1.includes('제작비합계') || col1.includes('제작비 합계')) totalCost = col5 || 0;
+    if (col0.includes('배우') && col1 === '소계') actorFee = col5 || 0;
   });
 
-  // Update summary card
-  const costVal = totalCost;
-  const mdVal = 0; // will be from MD sheet
-  document.getElementById('kr-cost').textContent = fmtWon(costVal);
+  document.getElementById('kr-cost').textContent = fmtWon(totalCost);
+  return actorFee;
 }
 
 function renderJapanTable(table, tbodyId, prefix) {
@@ -107,12 +107,12 @@ function renderJapanTable(table, tbodyId, prefix) {
     const col3 = getCellValue(row, 3);
     const col4 = getCellValue(row, 4);
 
-    const isHeader = col0.startsWith('===');
+    const isHeader = col0.startsWith('===') || col0.startsWith('[');
     const isSubtotal = col0.includes('소계') || col0.includes('합계');
     const isSummary = col0.includes('이익') || col0.includes('몫');
 
     if (isHeader) {
-      tr.innerHTML = `<td colspan="5" style="font-weight:bold;background:#f0f0f0;font-size:14px">${col0}</td>`;
+      tr.innerHTML = `<td colspan="5" style="font-weight:600;background:var(--bg);font-size:13px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.02em">${col0}</td>`;
     } else {
       if (isSummary) tr.classList.add('grand-total');
       else if (isSubtotal) tr.classList.add('subtotal');
@@ -142,7 +142,7 @@ function renderJapanTable(table, tbodyId, prefix) {
   document.getElementById(`${prefix}-profit`).textContent = fmtWon(profit);
   document.getElementById(`${prefix}-share`).textContent = fmtWon(share);
 
-  return share;
+  return { share, profit };
 }
 
 function renderMDTable(table) {
@@ -157,7 +157,7 @@ function renderMDTable(table) {
     const col0 = getCellValue(row, 0) || '';
     const tr = document.createElement('tr');
 
-    if (col0.startsWith('===')) {
+    if (col0.startsWith('===') || col0.startsWith('[')) {
       currentSection = col0;
       tr.classList.add('md-section-header');
       tr.innerHTML = `<td colspan="8" style="font-size:14px;padding:12px 10px">${col0}</td>`;
@@ -202,7 +202,7 @@ function renderMDTable(table) {
   document.getElementById('kr-md').textContent = fmtWon(krMdTotal);
 }
 
-function updateTotals(jp1Share, jp2Share) {
+function updateTotals(jp1Share, jp2Share, jp1Profit, jp2Profit, actorFee) {
   const krCostEl = document.getElementById('kr-cost').textContent;
   const krMdEl = document.getElementById('kr-md').textContent;
 
@@ -213,11 +213,19 @@ function updateTotals(jp1Share, jp2Share) {
   document.getElementById('kr-profit').textContent = fmtWon(krProfit);
   if (krProfit < 0) document.getElementById('kr-profit').classList.add('negative');
 
-  const totalOmo = krProfit + (jp1Share || 0);
-  const totalWat = krProfit + (jp2Share || 0);
+  // 석필름 = 한국 순이익 + 일본 50%
+  const sukOmo = krProfit + (jp1Share || 0);
+  const sukWat = krProfit + (jp2Share || 0);
+  // IMX = 일본 50%
+  const imxOmo = jp1Share || 0;
+  const imxWat = jp2Share || 0;
 
-  document.getElementById('total-omo').textContent = fmtWon(totalOmo);
-  document.getElementById('total-wat').textContent = fmtWon(totalWat);
+  document.getElementById('total-omo-suk').textContent = fmtWon(sukOmo);
+  document.getElementById('total-wat-suk').textContent = fmtWon(sukWat);
+  document.getElementById('total-omo-imx').textContent = fmtWon(imxOmo);
+  document.getElementById('total-wat-imx').textContent = fmtWon(imxWat);
+  document.getElementById('total-omo-actor').textContent = fmtWon(actorFee);
+  document.getElementById('total-wat-actor').textContent = fmtWon(actorFee);
 }
 
 // Collapsible sections
@@ -244,11 +252,11 @@ async function refreshData() {
     fetchSheetData('MD_판매'),
   ]);
 
-  renderKoreaTable(krData);
-  const jp1Share = renderJapanTable(jp1Data, 'jp1-tbody', 'jp1');
-  const jp2Share = renderJapanTable(jp2Data, 'jp2-tbody', 'jp2');
+  const actorFee = renderKoreaTable(krData);
+  const jp1 = renderJapanTable(jp1Data, 'jp1-tbody', 'jp1');
+  const jp2 = renderJapanTable(jp2Data, 'jp2-tbody', 'jp2');
   renderMDTable(mdData);
-  updateTotals(jp1Share, jp2Share);
+  updateTotals(jp1.share, jp2.share, jp1.profit, jp2.profit, actorFee);
 
   const now = new Date().toLocaleString('ko-KR');
   document.getElementById('last-update').textContent = `마지막 업데이트: ${now}`;
