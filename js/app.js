@@ -223,6 +223,8 @@ function tbl(rows, type) {
       ['소구분','항목','가격(₩)','단가(₩)','판매원가(¥)','판매원가(₩)','엔화(¥)','금액/비율'].indexOf(b) >= 0;
     var isS = a.indexOf('소계') >= 0 || b.indexOf('소계') >= 0 || b.indexOf('합계') >= 0;
     var isP = a === '이익' || b.indexOf('순이익') >= 0;
+    // 일본 시트에서 석필름/IMX 배분 행 제거
+    if (type === 'jp' && (a.indexOf('석필름') >= 0 || a.indexOf('IMX') >= 0)) return;
 
     if (isH) {
       // 일본 시트: 빈 헤더 칼럼에 단위 채우기
