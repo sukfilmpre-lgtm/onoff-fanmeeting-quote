@@ -214,6 +214,7 @@ function updateTotals(distData) {
 
 function renderDistribution(table) {
   if (!table) return;
+  // Row map: 비율5-9, 한국게런티12-14, 일본게런티17-19, 한국계산22-24, 오모테산도27-29, 와테라스32-34
   let krSukRate = 70, krHevRate = 30, jpSukRate = 50, jpImxRate = 50;
   let krActorA = 0, krActorB = 0;
   let jpActorA = 0, jpActorB = 0;
@@ -223,24 +224,20 @@ function renderDistribution(table) {
   table.rows.forEach((row, i) => {
     const col2 = getCellValue(row, 2);
     const r = i + 1;
-    // 배분비율
     if (r === 5) krSukRate = col2 || 70;
     if (r === 6) krHevRate = col2 || 30;
     if (r === 8) jpSukRate = col2 || 50;
     if (r === 9) jpImxRate = col2 || 50;
-    // 한국 게런티
-    if (r === 13) krActorA = col2 || 0;
-    if (r === 14) krActorB = col2 || 0;
-    // 일본 게런티
-    if (r === 18) jpActorA = col2 || 0;
-    if (r === 19) jpActorB = col2 || 0;
-    // 자동계산
-    if (r === 24) krSuk = col2 || 0;
-    if (r === 25) krHev = col2 || 0;
-    if (r === 29) omoSuk = col2 || 0;
-    if (r === 30) omoImx = col2 || 0;
-    if (r === 34) watSuk = col2 || 0;
-    if (r === 35) watImx = col2 || 0;
+    if (r === 12) krActorA = col2 || 0;
+    if (r === 13) krActorB = col2 || 0;
+    if (r === 17) jpActorA = col2 || 0;
+    if (r === 18) jpActorB = col2 || 0;
+    if (r === 23) krSuk = col2 || 0;
+    if (r === 24) krHev = col2 || 0;
+    if (r === 28) omoSuk = col2 || 0;
+    if (r === 29) omoImx = col2 || 0;
+    if (r === 33) watSuk = col2 || 0;
+    if (r === 34) watImx = col2 || 0;
   });
 
   // 한국
