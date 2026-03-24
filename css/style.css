@@ -9,7 +9,11 @@ button{background:#0071e3;color:#fff;border:none;padding:5px 14px;border-radius:
 
 main{max-width:920px;margin:0 auto;padding:28px 16px 60px}
 main>h2{font-size:24px;font-weight:700;letter-spacing:-.03em;margin:32px 0 14px}
-main>h2:first-child{margin-top:0}
+
+.option-bar{background:#fff;border-radius:12px;padding:14px 20px;border:1px solid rgba(0,0,0,.04);margin-bottom:16px}
+.chk-label{font-size:14px;font-weight:500;cursor:pointer;display:flex;align-items:center;gap:8px}
+.chk-label input{width:18px;height:18px;accent-color:#0071e3;cursor:pointer}
+.chk-desc{font-size:12px;color:#aeaeb2;font-weight:400}
 
 .loading{color:#aeaeb2;text-align:center;padding:40px}
 

@@ -104,9 +104,10 @@ function init() {
       }
     });
 
+    var videoCost = document.getElementById('chk-video').checked ? 5000000 : 0;
     var sukKr = (D.kSuk||0) + (D.kvs||0);
     var sukJp = (D.jSuk||0) + (D.jv||0);
-    var sukTotal = sukKr + sukJp;
+    var sukTotal = sukKr + sukJp - videoCost;
     var hevTotal = (D.kHev||0) + (D.kvh||0);
     var imxTotal = (D.jImx||0);
     var a1Kr = (D.ka1||0), a1Jp = (D.ja1||0), a1Total = a1Kr + a1Jp;
@@ -138,6 +139,9 @@ function init() {
     dh += '<div class="total-label">석필름 (제작사)</div>';
     dh += '<div class="total-row"><span>한국</span><span>' + fw(sukKr) + '</span></div>';
     dh += '<div class="total-row"><span>일본</span><span>' + fw(sukJp) + '</span></div>';
+    if (videoCost > 0) {
+      dh += '<div class="total-row"><span>영상제작비</span><span>-' + fw(videoCost) + '</span></div>';
+    }
     dh += '<div class="total-row sum"><span>합계</span><span>' + fw(sukTotal) + '</span></div>';
     dh += '</div>';
 
