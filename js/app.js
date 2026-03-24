@@ -138,11 +138,14 @@ function renderDistribution(table) {
   // Row map: 비율5-9, 한국게런티12-14, 일본게런티17-19, 한국계산22-24, 와테라스27-29
   let krSukRate=70, krHevRate=30, jpSukRate=50, jpImxRate=50;
   let krActorA=0, krActorB=0, jpActorA=0, jpActorB=0;
-  let krSuk=0, krHev=0, krVod=0, jpSuk=0, jpImx=0;
+  let krSuk=0, krHev=0, krVodSuk=0, krVodHev=0, jpSuk=0, jpImx=0, jpVod=0;
 
   table.rows.forEach((row, i) => {
     const v = getCellValue(row, 2);
     const r = i + 1;
+    // 비율: 5,6,8,9 / 한국게런티: 12,13 / 일본게런티: 17,18
+    // 한국자동: 23,24 / 한국VOD: 25(이전) → 38,39
+    // 일본자동: 30,31 / 일본VOD: 42
     if (r===5) krSukRate = v||70;
     if (r===6) krHevRate = v||30;
     if (r===8) jpSukRate = v||50;
@@ -153,20 +156,24 @@ function renderDistribution(table) {
     if (r===18) jpActorB = v||0;
     if (r===23) krSuk = v||0;
     if (r===24) krHev = v||0;
-    if (r===25) krVod = v||0;
-    if (r===29) jpSuk = v||0;
-    if (r===30) jpImx = v||0;
+    if (r===30) jpSuk = v||0;
+    if (r===31) jpImx = v||0;
+    if (r===38) krVodSuk = v||0;
+    if (r===39) krVodHev = v||0;
+    if (r===42) jpVod = v||0;
   });
 
   document.getElementById('dist-kr-suk').textContent = fmtWon(krSuk);
   document.getElementById('dist-kr-hev').textContent = fmtWon(krHev);
-  document.getElementById('dist-kr-vod').textContent = fmtWon(krVod);
+  document.getElementById('dist-kr-vod-suk').textContent = fmtWon(krVodSuk);
+  document.getElementById('dist-kr-vod-hev').textContent = fmtWon(krVodHev);
   document.getElementById('dist-kr-actor-a').textContent = fmtWon(krActorA);
   document.getElementById('dist-kr-actor-b').textContent = fmtWon(krActorB);
   document.getElementById('dist-kr-ratio').textContent = `${krSukRate} : ${krHevRate}`;
 
   document.getElementById('dist-jp-suk').textContent = fmtWon(jpSuk);
   document.getElementById('dist-jp-imx').textContent = fmtWon(jpImx);
+  document.getElementById('dist-jp-vod').textContent = fmtWon(jpVod);
   document.getElementById('dist-jp-actor-a').textContent = fmtWon(jpActorA);
   document.getElementById('dist-jp-actor-b').textContent = fmtWon(jpActorB);
   document.getElementById('dist-jp-ratio').textContent = `${jpSukRate} : ${jpImxRate}`;
