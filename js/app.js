@@ -50,8 +50,7 @@ function init() {
         skip = false;
         if (card) html += card + '</div>';
         var cls = a.includes('한국') ? 'orange' : 'green';
-        var unit = a.includes('일본') ? ' <span class="unit">₩ 원화 환산</span>' : ' <span class="unit">₩</span>';
-        card = '<div class="card ' + cls + '"><div class="card-title">' + a.replace(/[\[\]]/g, '').trim() + unit + '</div>';
+        card = '<div class="card ' + cls + '"><div class="card-title">' + a.replace(/[\[\]]/g, '').trim() + '</div>';
         return;
       }
       if (skip || !card) return;
@@ -191,9 +190,9 @@ function init() {
     document.getElementById('dist').innerHTML = dh;
 
     // 상세 테이블
-    document.getElementById('kr-detail').innerHTML = tbl(kr);
-    document.getElementById('jp-detail').innerHTML = tbl(jp);
-    document.getElementById('md-detail').innerHTML = tbl(md);
+    document.getElementById('kr-detail').innerHTML = tbl(kr, 'kr');
+    document.getElementById('jp-detail').innerHTML = tbl(jp, 'jp');
+    document.getElementById('md-detail').innerHTML = tbl(md, 'md');
 
     document.getElementById('status').textContent = new Date().toLocaleString('ko-KR') + ' 업데이트';
   }).catch(function(e) {
@@ -211,7 +210,7 @@ function makeDistCard(title, cls, items, sub) {
   return h;
 }
 
-function tbl(rows) {
+function tbl(rows, type) {
   var h = '<table>';
   rows.forEach(function(cells) {
     if (!cells || cells.every(function(c) { return c == null; })) return;
@@ -226,6 +225,11 @@ function tbl(rows) {
     var isP = a === '이익' || b.indexOf('순이익') >= 0;
 
     if (isH) {
+      // 일본 시트: 빈 헤더 칼럼에 단위 채우기
+      if (type === 'jp') {
+        if (a === '좌석 종류') cells = ['좌석 종류','가격(¥)','매수','금액(¥)','금액(₩)',''];
+        if (a === '항목' && cells.length >= 5) cells = ['항목','단위','횟수','단가(¥)','합계(¥)','합계(₩)'];
+      }
       h += '<tr class="th">' + cells.map(function(c) { return '<td>' + (c || '') + '</td>'; }).join('') + '</tr>';
     } else {
       var cls = isS ? ' class="sub"' : (isP ? ' class="profit"' : '');
