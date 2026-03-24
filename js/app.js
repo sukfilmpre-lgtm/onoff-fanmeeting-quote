@@ -44,7 +44,7 @@ function renderKoreaTable(table) {
   if (!table) return;
   const tbody = document.getElementById('kr-tbody');
   tbody.innerHTML = '';
-  let totalCost = 0;
+  let totalCost = 0, ticketIncome = 0, vodIncome = 0;
 
   table.rows.forEach((row, i) => {
     if (i < 2) return;
@@ -52,16 +52,25 @@ function renderKoreaTable(table) {
     const c = Array.from({length: 7}, (_, j) => getCellValue(row, j));
     const col0 = c[0] || '', col1 = c[1] || '';
 
-    if (col1.includes('소계')) tr.classList.add('subtotal');
+    if (col0.startsWith('[') || col0.startsWith('===')) {
+      tr.innerHTML = `<td colspan="7" style="font-weight:600;background:var(--bg);font-size:13px;color:var(--text-secondary)">${col0}</td>`;
+      tbody.appendChild(tr); return;
+    }
+
+    if (col1.includes('소계') || col0.includes('소계')) tr.classList.add('subtotal');
     if (col1.includes('합계') || col1.includes('순이익')) tr.classList.add('grand-total');
 
     tr.innerHTML = `<td>${col0}</td><td>${col1}</td><td class="num">${fmt(c[2])}</td><td class="num">${fmt(c[3])}</td><td class="num">${fmt(c[4])}</td><td class="num">${fmt(c[5])}</td><td>${c[6]||''}</td>`;
     tbody.appendChild(tr);
 
     if (col1.includes('제작비') && col1.includes('VAT')) totalCost = c[5] || 0;
+    if (col0 === '티켓 소계') ticketIncome = c[3] || 0;
+    if (col0 === '중계/VOD 소계') vodIncome = c[3] || 0;
   });
 
   document.getElementById('kr-cost').textContent = fmtWon(totalCost);
+  document.getElementById('kr-ticket').textContent = fmtWon(ticketIncome);
+  document.getElementById('kr-vod').textContent = fmtWon(vodIncome);
 }
 
 function renderJapanTable(table) {
@@ -129,7 +138,7 @@ function renderDistribution(table) {
   // Row map: 비율5-9, 한국게런티12-14, 일본게런티17-19, 한국계산22-24, 와테라스27-29
   let krSukRate=70, krHevRate=30, jpSukRate=50, jpImxRate=50;
   let krActorA=0, krActorB=0, jpActorA=0, jpActorB=0;
-  let krSuk=0, krHev=0, jpSuk=0, jpImx=0;
+  let krSuk=0, krHev=0, krVod=0, jpSuk=0, jpImx=0;
 
   table.rows.forEach((row, i) => {
     const v = getCellValue(row, 2);
@@ -144,12 +153,14 @@ function renderDistribution(table) {
     if (r===18) jpActorB = v||0;
     if (r===23) krSuk = v||0;
     if (r===24) krHev = v||0;
-    if (r===28) jpSuk = v||0;
-    if (r===29) jpImx = v||0;
+    if (r===25) krVod = v||0;
+    if (r===29) jpSuk = v||0;
+    if (r===30) jpImx = v||0;
   });
 
   document.getElementById('dist-kr-suk').textContent = fmtWon(krSuk);
   document.getElementById('dist-kr-hev').textContent = fmtWon(krHev);
+  document.getElementById('dist-kr-vod').textContent = fmtWon(krVod);
   document.getElementById('dist-kr-actor-a').textContent = fmtWon(krActorA);
   document.getElementById('dist-kr-actor-b').textContent = fmtWon(krActorB);
   document.getElementById('dist-kr-ratio').textContent = `${krSukRate} : ${krHevRate}`;
@@ -188,10 +199,11 @@ async function refreshData() {
   renderJapanTable(jpData);
   renderMDTable(mdData);
 
-  // 한국 순이익
+  // 한국 순이익 = 티켓 + MD - 제작비
   const krCost = parseFloat((document.getElementById('kr-cost').textContent).replace(/[₩,\-]/g,''))||0;
+  const krTicket = parseFloat((document.getElementById('kr-ticket').textContent).replace(/[₩,\-]/g,''))||0;
   const krMd = parseFloat((document.getElementById('kr-md').textContent).replace(/[₩,\-]/g,''))||0;
-  document.getElementById('kr-profit').textContent = fmtWon(krMd - krCost);
+  document.getElementById('kr-profit').textContent = fmtWon(krTicket + krMd - krCost);
 
   renderDistribution(distData);
 
