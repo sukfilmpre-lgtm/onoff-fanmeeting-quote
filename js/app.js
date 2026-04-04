@@ -106,7 +106,11 @@ function renderAll(dash, dist, kr, jp, md) {
     // 종합 대시보드 - 한국/일본 동일 형식 카드 (수익배분 섹션 제외)
     var html = '';
     if (totalTickets > 0) {
-      html += '<div class="ticket-summary">총 티켓 <b>' + fn(totalTickets) + '매</b> (한국 ' + fn(krTickets) + ' + 일본 ' + fn(jpTickets) + ')</div>';
+      html += '<div class="ticket-summary">' +
+        '총 티켓 <b>' + fn(totalTickets) + '매</b>' +
+        '<span class="tkt-item">한국 <b>' + fn(krTickets) + '</b></span>' +
+        '<span class="tkt-item">일본 <b>' + fn(jpTickets) + '</b></span>' +
+        '</div>';
     }
     html += '<div class="grid">';
     var card = '', skip = false;
@@ -330,7 +334,8 @@ function tbl(rows, type) {
 
 var _lastData = null;
 var _allSnapshots = {};
-var _activeTab = 'live';
+var _tabOrder = [];
+var _activeTab = '';
 var GH_TOKEN = localStorage.getItem('gh_token') || '';
 var GH_REPO = 'sukfilmpre-lgtm/onoff-fanmeeting-quote';
 var GH_PATH = 'snapshots/';
@@ -371,23 +376,32 @@ function checkAdmin() {
 
 // === 탭 로드 ===
 function loadAllSnapshots() {
-  fetch('https://api.github.com/repos/' + GH_REPO + '/contents/' + GH_PATH)
+  var orderPromise = ghRead(GH_PATH + 'tab_order.json').then(function(d) { if (d && Array.isArray(d)) _tabOrder = d; });
+  var snapPromise = fetch('https://api.github.com/repos/' + GH_REPO + '/contents/' + GH_PATH)
     .then(function(r) { return r.json(); })
     .then(function(files) {
       if (!Array.isArray(files)) return;
-      var jsons = files.filter(function(f) { return f.name.endsWith('.json') && f.name !== 'latest.json'; });
+      var jsons = files.filter(function(f) { return f.name.endsWith('.json') && f.name !== 'latest.json' && f.name !== 'tab_order.json'; });
       var promises = jsons.map(function(f) { return ghRead(GH_PATH + f.name); });
       return Promise.all(promises).then(function(results) {
         _allSnapshots = {};
         results.forEach(function(snap) { if (snap && snap.name) _allSnapshots[snap.name] = snap; });
-        renderTabs();
       });
-    }).catch(function() { renderTabs(); });
+    });
+  Promise.all([orderPromise, snapPromise]).then(function() { renderTabs(); }).catch(function() { renderTabs(); });
+}
+
+function getOrderedNames() {
+  var all = Object.keys(_allSnapshots);
+  var ordered = [];
+  _tabOrder.forEach(function(n) { if (all.indexOf(n) >= 0) ordered.push(n); });
+  all.forEach(function(n) { if (ordered.indexOf(n) < 0) ordered.push(n); });
+  return ordered;
 }
 
 function renderTabs() {
   var el = document.getElementById('scenario-tabs');
-  var names = Object.keys(_allSnapshots);
+  var names = getOrderedNames();
   if (names.length === 0) { el.innerHTML = ''; return; }
   var h = '';
   names.forEach(function(name) {
@@ -399,21 +413,16 @@ function renderTabs() {
 function switchTab(name) {
   _activeTab = name;
   renderTabs();
-  if (name === 'live') {
-    document.getElementById('snap-label').textContent = '';
-    loadLive();
-  } else {
-    var snap = _allSnapshots[name];
-    if (!snap) return;
-    if (snap.opts) {
-      document.getElementById('chk-video').checked = snap.opts.video || false;
-      document.getElementById('chk-rs').checked = snap.opts.rs || false;
-    }
-    _lastData = snap.data;
-    renderAll(snap.data[0], snap.data[1], snap.data[2], snap.data[3], snap.data[4]);
-    document.getElementById('snap-label').textContent = '(' + name + ')';
-    document.getElementById('status').textContent = '"' + name + '" · ' + new Date(snap.date).toLocaleString('ko-KR');
+  var snap = _allSnapshots[name];
+  if (!snap) return;
+  if (snap.opts) {
+    document.getElementById('chk-video').checked = snap.opts.video || false;
+    document.getElementById('chk-rs').checked = snap.opts.rs || false;
   }
+  _lastData = snap.data;
+  renderAll(snap.data[0], snap.data[1], snap.data[2], snap.data[3], snap.data[4]);
+  document.getElementById('snap-label').textContent = '(' + name + ')';
+  document.getElementById('status').textContent = '"' + name + '" · ' + new Date(snap.date).toLocaleString('ko-KR');
 }
 
 // === 저장 (비번 없음) ===
@@ -453,20 +462,47 @@ function saveSnapshot() {
 // === 관리 (비번 필요) ===
 function openAdmin() {
   if (!checkAdmin()) return;
-  var list = document.getElementById('admin-list');
-  list.innerHTML = '<div class="snap-empty">불러오는 중...</div>';
   document.getElementById('admin-modal').style.display = 'flex';
-  ghApi(GH_PATH).then(function(files) {
-    if (!Array.isArray(files)) { list.innerHTML = '<div class="snap-empty">저장된 견적이 없습니다</div>'; return; }
-    var jsons = files.filter(function(f) { return f.name.endsWith('.json') && f.name !== 'latest.json'; });
-    if (jsons.length === 0) { list.innerHTML = '<div class="snap-empty">저장된 견적이 없습니다</div>'; return; }
-    list.innerHTML = jsons.map(function(f) {
-      return '<div class="snap-item">' +
-        '<div class="snap-name">' + f.name.replace('.json', '') + '</div>' +
-        '<button class="snap-del" onclick="delSnapshot(\'' + f.name + '\')">삭제</button>' +
-        '</div>';
-    }).join('');
-  }).catch(function() { list.innerHTML = '<div class="snap-empty">로드 실패</div>'; });
+  renderAdminList();
+}
+
+function renderAdminList() {
+  var list = document.getElementById('admin-list');
+  var names = getOrderedNames();
+  if (names.length === 0) { list.innerHTML = '<div class="snap-empty">저장된 견적이 없습니다</div>'; return; }
+  list.innerHTML = names.map(function(name, i) {
+    var fname = name.replace(/[^a-zA-Z0-9가-힣_-]/g, '_') + '.json';
+    return '<div class="snap-item">' +
+      '<div class="snap-order">' +
+        '<button class="btn-arrow" onclick="moveTab(' + i + ',-1)" ' + (i === 0 ? 'disabled' : '') + '>▲</button>' +
+        '<button class="btn-arrow" onclick="moveTab(' + i + ',1)" ' + (i === names.length - 1 ? 'disabled' : '') + '>▼</button>' +
+      '</div>' +
+      '<div class="snap-name">' + name + '</div>' +
+      '<button class="snap-del" onclick="delSnapshot(\'' + fname + '\')">삭제</button>' +
+      '</div>';
+  }).join('');
+}
+
+function moveTab(idx, dir) {
+  var names = getOrderedNames();
+  var newIdx = idx + dir;
+  if (newIdx < 0 || newIdx >= names.length) return;
+  var tmp = names[idx];
+  names[idx] = names[newIdx];
+  names[newIdx] = tmp;
+  _tabOrder = names;
+  renderTabs();
+  renderAdminList();
+  saveTabOrder();
+}
+
+function saveTabOrder() {
+  var content = btoa(unescape(encodeURIComponent(JSON.stringify(_tabOrder))));
+  ghApi(GH_PATH + 'tab_order.json').then(function(ex) {
+    var body = { message: '탭 순서 업데이트', content: content };
+    if (ex && ex.sha) body.sha = ex.sha;
+    return ghApi(GH_PATH + 'tab_order.json', 'PUT', body);
+  });
 }
 
 function delSnapshot(fname) {
