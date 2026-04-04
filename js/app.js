@@ -360,7 +360,7 @@ function renderTabs() {
   var el = document.getElementById('scenario-tabs');
   var names = Object.keys(_allSnapshots);
   if (names.length === 0) { el.innerHTML = ''; return; }
-  var h = '<button class="tab' + (_activeTab === 'live' ? ' active' : '') + '" onclick="switchTab(\'live\')">실시간</button>';
+  var h = '';
   names.forEach(function(name) {
     h += '<button class="tab' + (_activeTab === name ? ' active' : '') + '" onclick="switchTab(\'' + name.replace(/'/g, "\\'") + '\')">' + name + '</button>';
   });
