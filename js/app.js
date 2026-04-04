@@ -371,6 +371,7 @@ function loadSnapshot(fname) {
       document.getElementById('chk-rs').checked = json.opts.rs || false;
     }
     document.getElementById('load-modal').style.display = 'none';
+    _lastData = json.data;
     renderAll(json.data[0], json.data[1], json.data[2], json.data[3], json.data[4]);
     document.getElementById('status').textContent = '"' + json.name + '" 불러옴 (' + new Date(json.date).toLocaleString('ko-KR') + ')';
     // latest.json 업데이트 (다른 사람 접속 시 이 버전이 보임)
