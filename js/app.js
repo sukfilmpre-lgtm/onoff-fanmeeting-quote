@@ -144,8 +144,8 @@ function renderAll(dash, dist, kr, jp, md) {
     var sukKr = (D.kSuk||0) + (D.kvs||0);
     var sukJp = (D.jSuk||0) + (D.jv||0);
     // RS: 석필름 순이익의 5%/인 (2명) = 10%를 석필름에서 차감
-    var rsKr = useRS ? sukKr * 0.05 : 0;  // 인당 5%
-    var rsJp = useRS ? sukJp * 0.05 : 0;
+    var rsKr = (useRS && sukKr > 0) ? sukKr * 0.05 : 0;
+    var rsJp = (useRS && sukJp > 0) ? sukJp * 0.05 : 0;
     var rsTotal = (rsKr + rsJp) * 2;  // 2명분
     var sukTotal = sukKr + sukJp - videoCost - rsTotal;
     var hevTotal = (D.kHev||0) + (D.kvh||0);
