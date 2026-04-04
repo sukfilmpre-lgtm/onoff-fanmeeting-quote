@@ -386,8 +386,16 @@ function loadSnapshot(fname) {
 
 function delSnapshot(fname, sha) {
   if (!confirm('"' + fname.replace('.json', '') + '" 삭제하시겠습니까?')) return;
-  ghApi(GH_PATH + fname, 'DELETE', { message: '스냅샷 삭제: ' + fname, sha: sha }).then(function() {
-    showLoadModal();
+  // 최신 sha를 가져와서 삭제 (캐시 문제 방지)
+  ghApi(GH_PATH + fname).then(function(f) {
+    if (!f || !f.sha) { alert('파일을 찾을 수 없습니다.'); return; }
+    return ghApi(GH_PATH + fname, 'DELETE', { message: '스냅샷 삭제: ' + fname, sha: f.sha });
+  }).then(function(r) {
+    if (r && r.commit) {
+      alert('삭제 완료');
+      // 1초 후 목록 갱신 (GitHub 캐시 반영 대기)
+      setTimeout(function() { showLoadModal(); }, 1500);
+    }
   }).catch(function(e) { alert('삭제 실패: ' + e.message); });
 }
 
