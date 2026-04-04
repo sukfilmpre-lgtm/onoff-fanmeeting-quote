@@ -144,10 +144,16 @@ function renderAll(dash, dist, kr, jp, md) {
     var sukKr = (D.kSuk||0) + (D.kvs||0);
     var sukJp = (D.jSuk||0) + (D.jv||0);
     // RS: 석필름 순이익의 5%/인 (2명) = 10%를 석필름에서 차감
-    var rsKr = (useRS && sukKr > 0) ? sukKr * 0.05 : 0;
-    var rsJp = (useRS && sukJp > 0) ? sukJp * 0.05 : 0;
-    var rsTotal = (rsKr + rsJp) * 2;  // 2명분
-    var sukTotal = sukKr + sukJp - videoCost - rsTotal;
+    var sukBeforeRS = sukKr + sukJp - videoCost;
+    var rsKr = 0, rsJp = 0, rsTotal = 0;
+    if (useRS && sukBeforeRS > 0) {
+      rsKr = sukKr > 0 ? sukKr * 0.05 : 0;
+      rsJp = sukJp > 0 ? sukJp * 0.05 : 0;
+      rsTotal = (rsKr + rsJp) * 2;
+      // RS 적용 후에도 마이너스면 RS 취소
+      if (sukBeforeRS - rsTotal < 0) { rsKr = 0; rsJp = 0; rsTotal = 0; }
+    }
+    var sukTotal = sukBeforeRS - rsTotal;
     var hevTotal = (D.kHev||0) + (D.kvh||0);
     var imxTotal = (D.jImx||0);
     var a1Kr = (D.ka1||0), a1Jp = (D.ja1||0), a1Total = a1Kr + a1Jp;
