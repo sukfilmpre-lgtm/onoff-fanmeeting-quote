@@ -9,7 +9,12 @@
 <body>
 <header>
   <b>on&off 팬미팅 견적 대시보드</b>
-  <div class="info"><span id="rate">...</span><button onclick="init()">새로고침</button></div>
+  <div class="info">
+    <span id="rate">...</span>
+    <button onclick="init()">새로고침</button>
+    <button onclick="saveSnapshot()" class="btn-save">저장</button>
+    <button onclick="showLoadModal()" class="btn-load">불러오기</button>
+  </div>
 </header>
 <main>
   <h2>종합 수익 요약</h2>
@@ -39,6 +44,13 @@
   <a href="https://docs.google.com/spreadsheets/d/1o5XdAT1wg8Jv5Boj6rdy_klGJHlB_am4E7eZXs9S15s/edit" target="_blank">Google Spreadsheet</a>
   · <span id="status"></span>
 </footer>
+<div id="load-modal" class="modal" style="display:none" onclick="if(event.target===this)this.style.display='none'">
+  <div class="modal-box">
+    <h3>저장된 견적 불러오기</h3>
+    <div id="snapshot-list"></div>
+    <button onclick="this.parentElement.parentElement.style.display='none'" class="btn-close">닫기</button>
+  </div>
+</div>
 <script src="js/app.js"></script>
 </body>
 </html>

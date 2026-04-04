@@ -37,8 +37,16 @@ function init() {
     load('종합_대시보드'), load('수익배분'),
     load('한국_견적'), load('일본_견적_와테라스'), load('MD_판매')
   ]).then(function(results) {
+    _lastData = results;
     var dash = results[0], dist = results[1], kr = results[2], jp = results[3], md = results[4];
+    renderAll(dash, dist, kr, jp, md);
+  }).catch(function(e) {
+    console.error('Init error:', e);
+    document.getElementById('status').textContent = '에러: ' + e.message;
+  });
+}
 
+function renderAll(dash, dist, kr, jp, md) {
     // 종합 대시보드 - 한국/일본 동일 형식 카드 (수익배분 섹션 제외)
     var html = '<div class="grid">';
     var card = '', skip = false;
@@ -195,10 +203,6 @@ function init() {
     document.getElementById('md-detail').innerHTML = tbl(md, 'md');
 
     document.getElementById('status').textContent = new Date().toLocaleString('ko-KR') + ' 업데이트';
-  }).catch(function(e) {
-    console.error('Init error:', e);
-    document.getElementById('status').textContent = '에러: ' + e.message;
-  });
 }
 
 function makeDistCard(title, cls, items, sub) {
@@ -255,6 +259,68 @@ function tbl(rows, type) {
     }
   });
   return h + '</table>';
+}
+
+var _lastData = null;
+
+function saveSnapshot() {
+  if (!_lastData) { alert('데이터를 먼저 로드하세요.'); return; }
+  var name = prompt('저장 이름을 입력하세요:');
+  if (!name || !name.trim()) return;
+  name = name.trim();
+  var saves = JSON.parse(localStorage.getItem('onoff_snapshots') || '{}');
+  saves[name] = {
+    date: new Date().toISOString(),
+    data: _lastData,
+    opts: {
+      video: document.getElementById('chk-video').checked,
+      rs: document.getElementById('chk-rs').checked
+    }
+  };
+  localStorage.setItem('onoff_snapshots', JSON.stringify(saves));
+  alert('"' + name + '" 저장 완료');
+}
+
+function showLoadModal() {
+  var saves = JSON.parse(localStorage.getItem('onoff_snapshots') || '{}');
+  var keys = Object.keys(saves).sort(function(a, b) {
+    return new Date(saves[b].date) - new Date(saves[a].date);
+  });
+  var list = document.getElementById('snapshot-list');
+  if (keys.length === 0) {
+    list.innerHTML = '<div class="snap-empty">저장된 견적이 없습니다</div>';
+  } else {
+    list.innerHTML = keys.map(function(k) {
+      var d = new Date(saves[k].date);
+      var ds = d.toLocaleDateString('ko-KR') + ' ' + d.toLocaleTimeString('ko-KR', {hour:'2-digit',minute:'2-digit'});
+      return '<div class="snap-item" onclick="loadSnapshot(\'' + k.replace(/'/g, "\\'") + '\')">' +
+        '<div><div class="snap-name">' + k + '</div><div class="snap-date">' + ds + '</div></div>' +
+        '<button class="snap-del" onclick="event.stopPropagation();delSnapshot(\'' + k.replace(/'/g, "\\'") + '\')">삭제</button>' +
+        '</div>';
+    }).join('');
+  }
+  document.getElementById('load-modal').style.display = 'flex';
+}
+
+function loadSnapshot(name) {
+  var saves = JSON.parse(localStorage.getItem('onoff_snapshots') || '{}');
+  if (!saves[name]) return;
+  var s = saves[name];
+  if (s.opts) {
+    document.getElementById('chk-video').checked = s.opts.video || false;
+    document.getElementById('chk-rs').checked = s.opts.rs || false;
+  }
+  document.getElementById('load-modal').style.display = 'none';
+  renderAll(s.data[0], s.data[1], s.data[2], s.data[3], s.data[4]);
+  document.getElementById('status').textContent = '"' + name + '" 불러옴 (' + new Date(s.date).toLocaleString('ko-KR') + ')';
+}
+
+function delSnapshot(name) {
+  if (!confirm('"' + name + '" 삭제하시겠습니까?')) return;
+  var saves = JSON.parse(localStorage.getItem('onoff_snapshots') || '{}');
+  delete saves[name];
+  localStorage.setItem('onoff_snapshots', JSON.stringify(saves));
+  showLoadModal();
 }
 
 document.querySelectorAll('.toggle').forEach(function(el) {
