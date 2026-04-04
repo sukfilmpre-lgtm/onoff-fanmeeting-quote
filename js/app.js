@@ -23,7 +23,7 @@ function load(sheet) {
   }).catch(function(e) { console.error(sheet, e); return []; });
 }
 
-function init() {
+function init(forceLive) {
   document.getElementById('status').textContent = '로딩 중...';
 
   // 환율
@@ -33,13 +33,36 @@ function init() {
     document.getElementById('rate').textContent = '환율 로드 실패';
   });
 
+  // latest.json 체크 (인증 불필요 - public repo)
+  if (!forceLive) {
+    fetch('https://api.github.com/repos/' + GH_REPO + '/contents/' + GH_PATH + 'latest.json')
+      .then(function(r) { return r.json(); })
+      .then(function(f) {
+        if (f && f.content) {
+          var json = JSON.parse(decodeURIComponent(escape(atob(f.content.replace(/\n/g, '')))));
+          if (json.opts) {
+            document.getElementById('chk-video').checked = json.opts.video || false;
+            document.getElementById('chk-rs').checked = json.opts.rs || false;
+          }
+          _lastData = json.data;
+          renderAll(json.data[0], json.data[1], json.data[2], json.data[3], json.data[4]);
+          document.getElementById('status').textContent = '"' + json.name + '" (저장본) · ' + new Date(json.date).toLocaleString('ko-KR');
+          return;
+        }
+        throw new Error('no latest');
+      }).catch(function() { loadLive(); });
+  } else {
+    loadLive();
+  }
+}
+
+function loadLive() {
   Promise.all([
     load('종합_대시보드'), load('수익배분'),
     load('한국_견적'), load('일본_견적_와테라스'), load('MD_판매')
   ]).then(function(results) {
     _lastData = results;
-    var dash = results[0], dist = results[1], kr = results[2], jp = results[3], md = results[4];
-    renderAll(dash, dist, kr, jp, md);
+    renderAll(results[0], results[1], results[2], results[3], results[4]);
   }).catch(function(e) {
     console.error('Init error:', e);
     document.getElementById('status').textContent = '에러: ' + e.message;
@@ -272,9 +295,15 @@ function ghApi(path, method, body) {
   return fetch('https://api.github.com/repos/' + GH_REPO + '/contents/' + path, opts).then(function(r) { return r.json(); });
 }
 
-function checkToken() {
+var PASS = '1234';
+
+function checkAuth() {
+  if (sessionStorage.getItem('authed')) return true;
+  var p = prompt('비밀번호를 입력하세요:');
+  if (p !== PASS) { alert('비밀번호가 틀렸습니다.'); return false; }
+  sessionStorage.setItem('authed', '1');
   if (!GH_TOKEN) {
-    var t = prompt('GitHub 토큰을 입력하세요 (최초 1회, 브라우저에 저장됨):');
+    var t = prompt('GitHub 토큰을 입력하세요 (최초 1회):');
     if (!t) return false;
     GH_TOKEN = t.trim();
     localStorage.setItem('gh_token', GH_TOKEN);
@@ -284,7 +313,7 @@ function checkToken() {
 
 function saveSnapshot() {
   if (!_lastData) { alert('데이터를 먼저 로드하세요.'); return; }
-  if (!checkToken()) return;
+  if (!checkAuth()) return;
   var name = prompt('저장 이름을 입력하세요:');
   if (!name || !name.trim()) return;
   name = name.trim();
@@ -306,7 +335,7 @@ function saveSnapshot() {
 }
 
 function showLoadModal() {
-  if (!checkToken()) return;
+  if (!checkAuth()) return;
   var list = document.getElementById('snapshot-list');
   list.innerHTML = '<div class="snap-empty">불러오는 중...</div>';
   document.getElementById('load-modal').style.display = 'flex';
@@ -333,6 +362,13 @@ function loadSnapshot(fname) {
     document.getElementById('load-modal').style.display = 'none';
     renderAll(json.data[0], json.data[1], json.data[2], json.data[3], json.data[4]);
     document.getElementById('status').textContent = '"' + json.name + '" 불러옴 (' + new Date(json.date).toLocaleString('ko-KR') + ')';
+    // latest.json 업데이트 (다른 사람 접속 시 이 버전이 보임)
+    var latestContent = btoa(unescape(encodeURIComponent(JSON.stringify(json, null, 2))));
+    ghApi(GH_PATH + 'latest.json').then(function(ex) {
+      var body = { message: '최신 견적 업데이트: ' + json.name, content: latestContent };
+      if (ex && ex.sha) body.sha = ex.sha;
+      return ghApi(GH_PATH + 'latest.json', 'PUT', body);
+    });
   }).catch(function(e) { alert('불러오기 실패: ' + e.message); });
 }
 
