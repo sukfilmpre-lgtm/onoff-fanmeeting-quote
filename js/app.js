@@ -64,6 +64,13 @@ function rerender() {
   if (_lastData) renderAll(_lastData[0], _lastData[1], _lastData[2], _lastData[3], _lastData[4]);
 }
 
+function loadLiveAndClose() {
+  document.getElementById('admin-modal').style.display = 'none';
+  _activeTab = '';
+  renderTabs();
+  init(true);
+}
+
 function loadLive() {
   document.getElementById('snap-label').textContent = '';
   Promise.all([

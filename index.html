@@ -11,7 +11,6 @@
   <b>on&off 팬미팅 견적 대시보드</b>
   <div class="info">
     <span id="rate">...</span>
-    <button onclick="init(true)">실시간</button>
     <button onclick="openAdmin()" class="btn-admin">파일관리</button>
   </div>
 </header>
@@ -50,6 +49,7 @@
 <div id="admin-modal" class="modal" style="display:none" onclick="if(event.target===this)this.style.display='none'">
   <div class="modal-box">
     <h3>관리</h3>
+    <button onclick="loadLiveAndClose()" style="width:100%;margin-bottom:8px;padding:10px;font-size:14px">실시간 불러오기 (스프레드시트)</button>
     <button onclick="saveSnapshot()" class="btn-save" style="width:100%;margin-bottom:12px;padding:10px;font-size:14px">현재 데이터 저장</button>
     <div id="admin-list"></div>
     <button onclick="this.parentElement.parentElement.style.display='none'" class="btn-close">닫기</button>
