@@ -262,65 +262,85 @@ function tbl(rows, type) {
 }
 
 var _lastData = null;
+var GH_TOKEN = localStorage.getItem('gh_token') || '';
+var GH_REPO = 'sukfilmpre-lgtm/onoff-fanmeeting-quote';
+var GH_PATH = 'snapshots/';
+
+function ghApi(path, method, body) {
+  var opts = {method: method || 'GET', headers: {'Authorization': 'Bearer ' + GH_TOKEN, 'Accept': 'application/vnd.github+json'}};
+  if (body) { opts.body = JSON.stringify(body); opts.headers['Content-Type'] = 'application/json'; }
+  return fetch('https://api.github.com/repos/' + GH_REPO + '/contents/' + path, opts).then(function(r) { return r.json(); });
+}
+
+function checkToken() {
+  if (!GH_TOKEN) {
+    var t = prompt('GitHub 토큰을 입력하세요 (최초 1회, 브라우저에 저장됨):');
+    if (!t) return false;
+    GH_TOKEN = t.trim();
+    localStorage.setItem('gh_token', GH_TOKEN);
+  }
+  return true;
+}
 
 function saveSnapshot() {
   if (!_lastData) { alert('데이터를 먼저 로드하세요.'); return; }
+  if (!checkToken()) return;
   var name = prompt('저장 이름을 입력하세요:');
   if (!name || !name.trim()) return;
   name = name.trim();
-  var saves = JSON.parse(localStorage.getItem('onoff_snapshots') || '{}');
-  saves[name] = {
-    date: new Date().toISOString(),
-    data: _lastData,
-    opts: {
-      video: document.getElementById('chk-video').checked,
-      rs: document.getElementById('chk-rs').checked
-    }
+  var fname = name.replace(/[^a-zA-Z0-9가-힣_-]/g, '_') + '.json';
+  var payload = {
+    name: name, date: new Date().toISOString(), data: _lastData,
+    opts: { video: document.getElementById('chk-video').checked, rs: document.getElementById('chk-rs').checked }
   };
-  localStorage.setItem('onoff_snapshots', JSON.stringify(saves));
-  alert('"' + name + '" 저장 완료');
+  var content = btoa(unescape(encodeURIComponent(JSON.stringify(payload, null, 2))));
+  // 기존 파일 있으면 sha 필요
+  ghApi(GH_PATH + fname).then(function(existing) {
+    var body = { message: '견적 스냅샷: ' + name, content: content };
+    if (existing && existing.sha) body.sha = existing.sha;
+    return ghApi(GH_PATH + fname, 'PUT', body);
+  }).then(function(r) {
+    if (r.content) alert('"' + name + '" GitHub에 저장 완료');
+    else alert('저장 실패: ' + (r.message || '알 수 없는 오류'));
+  }).catch(function(e) { alert('저장 에러: ' + e.message); });
 }
 
 function showLoadModal() {
-  var saves = JSON.parse(localStorage.getItem('onoff_snapshots') || '{}');
-  var keys = Object.keys(saves).sort(function(a, b) {
-    return new Date(saves[b].date) - new Date(saves[a].date);
-  });
+  if (!checkToken()) return;
   var list = document.getElementById('snapshot-list');
-  if (keys.length === 0) {
-    list.innerHTML = '<div class="snap-empty">저장된 견적이 없습니다</div>';
-  } else {
-    list.innerHTML = keys.map(function(k) {
-      var d = new Date(saves[k].date);
-      var ds = d.toLocaleDateString('ko-KR') + ' ' + d.toLocaleTimeString('ko-KR', {hour:'2-digit',minute:'2-digit'});
-      return '<div class="snap-item" onclick="loadSnapshot(\'' + k.replace(/'/g, "\\'") + '\')">' +
-        '<div><div class="snap-name">' + k + '</div><div class="snap-date">' + ds + '</div></div>' +
-        '<button class="snap-del" onclick="event.stopPropagation();delSnapshot(\'' + k.replace(/'/g, "\\'") + '\')">삭제</button>' +
+  list.innerHTML = '<div class="snap-empty">불러오는 중...</div>';
+  document.getElementById('load-modal').style.display = 'flex';
+  ghApi(GH_PATH).then(function(files) {
+    if (!Array.isArray(files)) { list.innerHTML = '<div class="snap-empty">저장된 견적이 없습니다</div>'; return; }
+    var jsons = files.filter(function(f) { return f.name.endsWith('.json'); });
+    if (jsons.length === 0) { list.innerHTML = '<div class="snap-empty">저장된 견적이 없습니다</div>'; return; }
+    list.innerHTML = jsons.map(function(f) {
+      return '<div class="snap-item" onclick="loadSnapshot(\'' + f.name + '\')">' +
+        '<div><div class="snap-name">' + f.name.replace('.json', '') + '</div></div>' +
+        '<button class="snap-del" onclick="event.stopPropagation();delSnapshot(\'' + f.name + '\',\'' + f.sha + '\')">삭제</button>' +
         '</div>';
     }).join('');
-  }
-  document.getElementById('load-modal').style.display = 'flex';
+  }).catch(function() { list.innerHTML = '<div class="snap-empty">로드 실패</div>'; });
 }
 
-function loadSnapshot(name) {
-  var saves = JSON.parse(localStorage.getItem('onoff_snapshots') || '{}');
-  if (!saves[name]) return;
-  var s = saves[name];
-  if (s.opts) {
-    document.getElementById('chk-video').checked = s.opts.video || false;
-    document.getElementById('chk-rs').checked = s.opts.rs || false;
-  }
-  document.getElementById('load-modal').style.display = 'none';
-  renderAll(s.data[0], s.data[1], s.data[2], s.data[3], s.data[4]);
-  document.getElementById('status').textContent = '"' + name + '" 불러옴 (' + new Date(s.date).toLocaleString('ko-KR') + ')';
+function loadSnapshot(fname) {
+  ghApi(GH_PATH + fname).then(function(f) {
+    var json = JSON.parse(decodeURIComponent(escape(atob(f.content.replace(/\n/g, '')))));
+    if (json.opts) {
+      document.getElementById('chk-video').checked = json.opts.video || false;
+      document.getElementById('chk-rs').checked = json.opts.rs || false;
+    }
+    document.getElementById('load-modal').style.display = 'none';
+    renderAll(json.data[0], json.data[1], json.data[2], json.data[3], json.data[4]);
+    document.getElementById('status').textContent = '"' + json.name + '" 불러옴 (' + new Date(json.date).toLocaleString('ko-KR') + ')';
+  }).catch(function(e) { alert('불러오기 실패: ' + e.message); });
 }
 
-function delSnapshot(name) {
-  if (!confirm('"' + name + '" 삭제하시겠습니까?')) return;
-  var saves = JSON.parse(localStorage.getItem('onoff_snapshots') || '{}');
-  delete saves[name];
-  localStorage.setItem('onoff_snapshots', JSON.stringify(saves));
-  showLoadModal();
+function delSnapshot(fname, sha) {
+  if (!confirm('"' + fname.replace('.json', '') + '" 삭제하시겠습니까?')) return;
+  ghApi(GH_PATH + fname, 'DELETE', { message: '스냅샷 삭제: ' + fname, sha: sha }).then(function() {
+    showLoadModal();
+  }).catch(function(e) { alert('삭제 실패: ' + e.message); });
 }
 
 document.querySelectorAll('.toggle').forEach(function(el) {
