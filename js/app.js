@@ -46,6 +46,7 @@ function init(forceLive) {
           }
           _lastData = json.data;
           renderAll(json.data[0], json.data[1], json.data[2], json.data[3], json.data[4]);
+          document.getElementById('snap-label').textContent = '(' + json.name + ')';
           document.getElementById('status').textContent = '"' + json.name + '" (저장본) · ' + new Date(json.date).toLocaleString('ko-KR');
           return;
         }
@@ -61,6 +62,7 @@ function rerender() {
 }
 
 function loadLive() {
+  document.getElementById('snap-label').textContent = '';
   Promise.all([
     load('종합_대시보드'), load('수익배분'),
     load('한국_견적'), load('일본_견적_와테라스'), load('MD_판매')
@@ -379,6 +381,7 @@ function loadSnapshot(fname) {
     document.getElementById('load-modal').style.display = 'none';
     _lastData = json.data;
     renderAll(json.data[0], json.data[1], json.data[2], json.data[3], json.data[4]);
+    document.getElementById('snap-label').textContent = '(' + json.name + ')';
     document.getElementById('status').textContent = '"' + json.name + '" 불러옴 (' + new Date(json.date).toLocaleString('ko-KR') + ')';
     // latest.json 업데이트 (다른 사람 접속 시 이 버전이 보임)
     var latestContent = btoa(unescape(encodeURIComponent(JSON.stringify(json, null, 2))));
