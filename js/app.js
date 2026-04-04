@@ -56,6 +56,10 @@ function init(forceLive) {
   }
 }
 
+function rerender() {
+  if (_lastData) renderAll(_lastData[0], _lastData[1], _lastData[2], _lastData[3], _lastData[4]);
+}
+
 function loadLive() {
   Promise.all([
     load('종합_대시보드'), load('수익배분'),
