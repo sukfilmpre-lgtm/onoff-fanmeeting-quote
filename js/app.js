@@ -333,8 +333,15 @@ function saveSnapshot() {
     if (existing && existing.sha) body.sha = existing.sha;
     return ghApi(GH_PATH + fname, 'PUT', body);
   }).then(function(r) {
-    if (r.content) alert('"' + name + '" GitHub에 저장 완료');
-    else alert('저장 실패: ' + (r.message || '알 수 없는 오류'));
+    if (!r.content) { alert('저장 실패: ' + (r.message || '알 수 없는 오류')); return; }
+    // latest.json도 같이 업데이트
+    ghApi(GH_PATH + 'latest.json').then(function(ex) {
+      var body = { message: '최신 견적: ' + name, content: content };
+      if (ex && ex.sha) body.sha = ex.sha;
+      return ghApi(GH_PATH + 'latest.json', 'PUT', body);
+    }).then(function() {
+      alert('"' + name + '" 저장 완료 (기본 견적으로 설정됨)');
+    });
   }).catch(function(e) { alert('저장 에러: ' + e.message); });
 }
 
