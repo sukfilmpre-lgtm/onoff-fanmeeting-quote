@@ -36,28 +36,30 @@ function init(forceLive) {
   // 모든 스냅샷 로드 + latest 체크
   loadAllSnapshots();
 
-  if (!forceLive) {
-    ghRead(GH_PATH + 'latest.json').then(function(json) {
-      if (json && json.data) {
-        if (json.opts) {
-          document.getElementById('chk-video').checked = json.opts.video || false;
-          document.getElementById('chk-rs').checked = json.opts.rs || false;
-        }
-        _lastData = json.data;
-        _activeTab = json.name || 'live';
-        renderAll(json.data[0], json.data[1], json.data[2], json.data[3], json.data[4]);
-        document.getElementById('snap-label').textContent = '(' + json.name + ')';
-        document.getElementById('status').textContent = '"' + json.name + '" (저장본) · ' + new Date(json.date).toLocaleString('ko-KR');
-        setTimeout(renderTabs, 500);
-      } else {
-        loadLive();
-      }
-    });
-  } else {
-    _activeTab = 'live';
+  if (forceLive) {
+    _activeTab = '';
     renderTabs();
     loadLive();
+    return;
   }
+
+  ghRead(GH_PATH + 'latest.json').then(function(json) {
+    if (json && json.data) {
+      if (json.opts) {
+        document.getElementById('chk-video').checked = json.opts.video || false;
+        document.getElementById('chk-rs').checked = json.opts.rs || false;
+      }
+      _lastData = json.data;
+      _activeTab = json.name || '';
+      renderAll(json.data[0], json.data[1], json.data[2], json.data[3], json.data[4]);
+      document.getElementById('snap-label').textContent = '(' + json.name + ')';
+      document.getElementById('status').textContent = '"' + json.name + '" (저장본) · ' + new Date(json.date).toLocaleString('ko-KR');
+      setTimeout(renderTabs, 500);
+    } else {
+      document.getElementById('summary').innerHTML = '<p class="loading">저장된 견적이 없습니다. 파일관리에서 실시간 불러오기 후 저장하세요.</p>';
+      document.getElementById('dist').innerHTML = '';
+    }
+  });
 }
 
 function rerender() {
@@ -68,7 +70,8 @@ function loadLiveAndClose() {
   document.getElementById('admin-modal').style.display = 'none';
   _activeTab = '';
   renderTabs();
-  init(true);
+  document.getElementById('snap-label').textContent = '(실시간)';
+  loadLive();
 }
 
 function loadLive() {
@@ -86,8 +89,26 @@ function loadLive() {
 }
 
 function renderAll(dash, dist, kr, jp, md) {
+    // 티켓 판매수 파싱
+    var krTickets = 0, jpTickets = 0;
+    kr.forEach(function(cells) {
+      if (!cells) return;
+      var a = String(cells[0] || '');
+      if (a === '티켓 소계' && typeof cells[2] === 'number') krTickets = cells[2];
+    });
+    jp.forEach(function(cells) {
+      if (!cells) return;
+      var a = String(cells[0] || '');
+      if (a === '티켓 소계' && typeof cells[2] === 'number') jpTickets = cells[2];
+    });
+    var totalTickets = krTickets + jpTickets;
+
     // 종합 대시보드 - 한국/일본 동일 형식 카드 (수익배분 섹션 제외)
-    var html = '<div class="grid">';
+    var html = '';
+    if (totalTickets > 0) {
+      html += '<div class="ticket-summary">총 티켓 <b>' + fn(totalTickets) + '매</b> (한국 ' + fn(krTickets) + ' + 일본 ' + fn(jpTickets) + ')</div>';
+    }
+    html += '<div class="grid">';
     var card = '', skip = false;
     dash.forEach(function(cells) {
       if (!cells || !cells[0]) return;
@@ -97,7 +118,8 @@ function renderAll(dash, dist, kr, jp, md) {
         skip = false;
         if (card) html += card + '</div>';
         var cls = a.includes('한국') ? 'orange' : 'green';
-        card = '<div class="card ' + cls + '"><div class="card-title">' + a.replace(/[\[\]]/g, '').trim() + '</div>';
+        var tickets = a.includes('한국') ? krTickets : jpTickets;
+        card = '<div class="card ' + cls + '"><div class="card-title">' + a.replace(/[\[\]]/g, '').trim() + '<span class="ticket-badge">' + fn(tickets) + '매</span></div>';
         return;
       }
       if (skip || !card) return;

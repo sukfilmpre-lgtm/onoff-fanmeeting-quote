@@ -9,6 +9,7 @@ button{background:#0071e3;color:#fff;border:none;padding:5px 14px;border-radius:
 
 main{max-width:920px;margin:0 auto;padding:28px 16px 60px}
 main>h2{font-size:24px;font-weight:700;letter-spacing:-.03em;margin:32px 0 14px}
+#snap-label{font-size:18px;font-weight:700;color:#0071e3;margin-left:6px}
 
 .option-bar{background:#fff;border-radius:12px;padding:14px 20px;border:1px solid rgba(0,0,0,.04);margin-bottom:16px;display:flex;gap:24px}
 .chk-label{font-size:14px;font-weight:500;cursor:pointer;display:flex;align-items:center;gap:8px}
@@ -23,6 +24,9 @@ main>h2{font-size:24px;font-weight:700;letter-spacing:-.03em;margin:32px 0 14px}
 .card-title{font-size:13px;font-weight:600;color:#6e6e73;margin-bottom:16px;padding-bottom:12px;border-bottom:.5px solid rgba(0,0,0,.06);display:flex;align-items:center;gap:8px}
 .card-title::before{content:'';width:8px;height:8px;border-radius:50%;flex-shrink:0}
 .unit{font-size:11px;color:#aeaeb2;font-weight:400;margin-left:4px}
+.ticket-summary{font-size:15px;color:#6e6e73;margin-bottom:14px;padding:10px 16px;background:#fff;border-radius:10px;border:1px solid rgba(0,0,0,.04)}
+.ticket-summary b{color:#1d1d1f;font-size:18px}
+.ticket-badge{margin-left:auto;background:#e8e8ed;color:#1d1d1f;padding:3px 10px;border-radius:6px;font-size:12px;font-weight:600}
 .orange .card-title::before{background:#ff9f0a}
 .green .card-title::before{background:#30d158}
 .blue .card-title::before{background:#0071e3}
