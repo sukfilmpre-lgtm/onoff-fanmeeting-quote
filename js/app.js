@@ -33,26 +33,29 @@ function init(forceLive) {
     document.getElementById('rate').textContent = '환율 로드 실패';
   });
 
-  // latest.json 체크 (인증 불필요 - public repo)
+  // 모든 스냅샷 로드 + latest 체크
+  loadAllSnapshots();
+
   if (!forceLive) {
-    fetch('https://api.github.com/repos/' + GH_REPO + '/contents/' + GH_PATH + 'latest.json')
-      .then(function(r) { return r.json(); })
-      .then(function(f) {
-        if (f && f.content) {
-          var json = JSON.parse(decodeURIComponent(escape(atob(f.content.replace(/\n/g, '')))));
-          if (json.opts) {
-            document.getElementById('chk-video').checked = json.opts.video || false;
-            document.getElementById('chk-rs').checked = json.opts.rs || false;
-          }
-          _lastData = json.data;
-          renderAll(json.data[0], json.data[1], json.data[2], json.data[3], json.data[4]);
-          document.getElementById('snap-label').textContent = '(' + json.name + ')';
-          document.getElementById('status').textContent = '"' + json.name + '" (저장본) · ' + new Date(json.date).toLocaleString('ko-KR');
-          return;
+    ghRead(GH_PATH + 'latest.json').then(function(json) {
+      if (json && json.data) {
+        if (json.opts) {
+          document.getElementById('chk-video').checked = json.opts.video || false;
+          document.getElementById('chk-rs').checked = json.opts.rs || false;
         }
-        throw new Error('no latest');
-      }).catch(function() { loadLive(); });
+        _lastData = json.data;
+        _activeTab = json.name || 'live';
+        renderAll(json.data[0], json.data[1], json.data[2], json.data[3], json.data[4]);
+        document.getElementById('snap-label').textContent = '(' + json.name + ')';
+        document.getElementById('status').textContent = '"' + json.name + '" (저장본) · ' + new Date(json.date).toLocaleString('ko-KR');
+        setTimeout(renderTabs, 500);
+      } else {
+        loadLive();
+      }
+    });
   } else {
+    _activeTab = 'live';
+    renderTabs();
     loadLive();
   }
 }
@@ -297,6 +300,8 @@ function tbl(rows, type) {
 }
 
 var _lastData = null;
+var _allSnapshots = {};
+var _activeTab = 'live';
 var GH_TOKEN = localStorage.getItem('gh_token') || '';
 var GH_REPO = 'sukfilmpre-lgtm/onoff-fanmeeting-quote';
 var GH_PATH = 'snapshots/';
@@ -307,13 +312,16 @@ function ghApi(path, method, body) {
   return fetch('https://api.github.com/repos/' + GH_REPO + '/contents/' + path, opts).then(function(r) { return r.json(); });
 }
 
-var PASS = '1234';
+function ghRead(path) {
+  return fetch('https://api.github.com/repos/' + GH_REPO + '/contents/' + path)
+    .then(function(r) { return r.json(); })
+    .then(function(f) {
+      if (!f || !f.content) return null;
+      return JSON.parse(decodeURIComponent(escape(atob(f.content.replace(/\n/g, '')))));
+    }).catch(function() { return null; });
+}
 
-function checkAuth() {
-  if (sessionStorage.getItem('authed')) return true;
-  var p = prompt('비밀번호를 입력하세요:');
-  if (p !== PASS) { alert('비밀번호가 틀렸습니다.'); return false; }
-  sessionStorage.setItem('authed', '1');
+function ensureToken() {
   if (!GH_TOKEN) {
     var t = prompt('GitHub 토큰을 입력하세요 (최초 1회):');
     if (!t) return false;
@@ -323,10 +331,67 @@ function checkAuth() {
   return true;
 }
 
+var PASS = '1234';
+function checkAdmin() {
+  if (sessionStorage.getItem('authed')) return true;
+  var p = prompt('관리자 비밀번호를 입력하세요:');
+  if (p !== PASS) { alert('비밀번호가 틀렸습니다.'); return false; }
+  sessionStorage.setItem('authed', '1');
+  return ensureToken();
+}
+
+// === 탭 로드 ===
+function loadAllSnapshots() {
+  fetch('https://api.github.com/repos/' + GH_REPO + '/contents/' + GH_PATH)
+    .then(function(r) { return r.json(); })
+    .then(function(files) {
+      if (!Array.isArray(files)) return;
+      var jsons = files.filter(function(f) { return f.name.endsWith('.json') && f.name !== 'latest.json'; });
+      var promises = jsons.map(function(f) { return ghRead(GH_PATH + f.name); });
+      return Promise.all(promises).then(function(results) {
+        _allSnapshots = {};
+        results.forEach(function(snap) { if (snap && snap.name) _allSnapshots[snap.name] = snap; });
+        renderTabs();
+      });
+    }).catch(function() { renderTabs(); });
+}
+
+function renderTabs() {
+  var el = document.getElementById('scenario-tabs');
+  var names = Object.keys(_allSnapshots);
+  if (names.length === 0) { el.innerHTML = ''; return; }
+  var h = '<button class="tab' + (_activeTab === 'live' ? ' active' : '') + '" onclick="switchTab(\'live\')">실시간</button>';
+  names.forEach(function(name) {
+    h += '<button class="tab' + (_activeTab === name ? ' active' : '') + '" onclick="switchTab(\'' + name.replace(/'/g, "\\'") + '\')">' + name + '</button>';
+  });
+  el.innerHTML = h;
+}
+
+function switchTab(name) {
+  _activeTab = name;
+  renderTabs();
+  if (name === 'live') {
+    document.getElementById('snap-label').textContent = '';
+    loadLive();
+  } else {
+    var snap = _allSnapshots[name];
+    if (!snap) return;
+    if (snap.opts) {
+      document.getElementById('chk-video').checked = snap.opts.video || false;
+      document.getElementById('chk-rs').checked = snap.opts.rs || false;
+    }
+    _lastData = snap.data;
+    renderAll(snap.data[0], snap.data[1], snap.data[2], snap.data[3], snap.data[4]);
+    document.getElementById('snap-label').textContent = '(' + name + ')';
+    document.getElementById('status').textContent = '"' + name + '" · ' + new Date(snap.date).toLocaleString('ko-KR');
+  }
+}
+
+// === 저장 (비번 없음) ===
 function saveSnapshot() {
   if (!_lastData) { alert('데이터를 먼저 로드하세요.'); return; }
-  if (!checkAuth()) return;
-  var name = prompt('저장 이름을 입력하세요:');
+  if (!ensureToken()) return;
+  var name = prompt('저장 이름을 입력하세요 (예: 전석매진, 70%판매):');
   if (!name || !name.trim()) return;
   name = name.trim();
   var fname = name.replace(/[^a-zA-Z0-9가-힣_-]/g, '_') + '.json';
@@ -335,75 +400,59 @@ function saveSnapshot() {
     opts: { video: document.getElementById('chk-video').checked, rs: document.getElementById('chk-rs').checked }
   };
   var content = btoa(unescape(encodeURIComponent(JSON.stringify(payload, null, 2))));
-  // 기존 파일 있으면 sha 필요
   ghApi(GH_PATH + fname).then(function(existing) {
     var body = { message: '견적 스냅샷: ' + name, content: content };
     if (existing && existing.sha) body.sha = existing.sha;
     return ghApi(GH_PATH + fname, 'PUT', body);
   }).then(function(r) {
-    if (!r.content) { alert('저장 실패: ' + (r.message || '알 수 없는 오류')); return; }
-    // latest.json도 같이 업데이트
+    if (!r.content) { alert('저장 실패: ' + (r.message || '')); return; }
+    // latest.json 업데이트
     ghApi(GH_PATH + 'latest.json').then(function(ex) {
-      var body = { message: '최신 견적: ' + name, content: content };
+      var body = { message: '최신: ' + name, content: content };
       if (ex && ex.sha) body.sha = ex.sha;
       return ghApi(GH_PATH + 'latest.json', 'PUT', body);
     }).then(function() {
-      alert('"' + name + '" 저장 완료 (기본 견적으로 설정됨)');
+      alert('"' + name + '" 저장 완료');
+      _allSnapshots[name] = payload;
+      _activeTab = name;
+      renderTabs();
+      document.getElementById('snap-label').textContent = '(' + name + ')';
     });
   }).catch(function(e) { alert('저장 에러: ' + e.message); });
 }
 
-function showLoadModal() {
-  if (!checkAuth()) return;
-  var list = document.getElementById('snapshot-list');
+// === 관리 (비번 필요) ===
+function openAdmin() {
+  if (!checkAdmin()) return;
+  var list = document.getElementById('admin-list');
   list.innerHTML = '<div class="snap-empty">불러오는 중...</div>';
-  document.getElementById('load-modal').style.display = 'flex';
+  document.getElementById('admin-modal').style.display = 'flex';
   ghApi(GH_PATH).then(function(files) {
     if (!Array.isArray(files)) { list.innerHTML = '<div class="snap-empty">저장된 견적이 없습니다</div>'; return; }
-    var jsons = files.filter(function(f) { return f.name.endsWith('.json'); });
+    var jsons = files.filter(function(f) { return f.name.endsWith('.json') && f.name !== 'latest.json'; });
     if (jsons.length === 0) { list.innerHTML = '<div class="snap-empty">저장된 견적이 없습니다</div>'; return; }
     list.innerHTML = jsons.map(function(f) {
-      return '<div class="snap-item" onclick="loadSnapshot(\'' + f.name + '\')">' +
-        '<div><div class="snap-name">' + f.name.replace('.json', '') + '</div></div>' +
-        '<button class="snap-del" onclick="event.stopPropagation();delSnapshot(\'' + f.name + '\',\'' + f.sha + '\')">삭제</button>' +
+      return '<div class="snap-item">' +
+        '<div class="snap-name">' + f.name.replace('.json', '') + '</div>' +
+        '<button class="snap-del" onclick="delSnapshot(\'' + f.name + '\')">삭제</button>' +
         '</div>';
     }).join('');
   }).catch(function() { list.innerHTML = '<div class="snap-empty">로드 실패</div>'; });
 }
 
-function loadSnapshot(fname) {
-  ghApi(GH_PATH + fname).then(function(f) {
-    var json = JSON.parse(decodeURIComponent(escape(atob(f.content.replace(/\n/g, '')))));
-    if (json.opts) {
-      document.getElementById('chk-video').checked = json.opts.video || false;
-      document.getElementById('chk-rs').checked = json.opts.rs || false;
-    }
-    document.getElementById('load-modal').style.display = 'none';
-    _lastData = json.data;
-    renderAll(json.data[0], json.data[1], json.data[2], json.data[3], json.data[4]);
-    document.getElementById('snap-label').textContent = '(' + json.name + ')';
-    document.getElementById('status').textContent = '"' + json.name + '" 불러옴 (' + new Date(json.date).toLocaleString('ko-KR') + ')';
-    // latest.json 업데이트 (다른 사람 접속 시 이 버전이 보임)
-    var latestContent = btoa(unescape(encodeURIComponent(JSON.stringify(json, null, 2))));
-    ghApi(GH_PATH + 'latest.json').then(function(ex) {
-      var body = { message: '최신 견적 업데이트: ' + json.name, content: latestContent };
-      if (ex && ex.sha) body.sha = ex.sha;
-      return ghApi(GH_PATH + 'latest.json', 'PUT', body);
-    });
-  }).catch(function(e) { alert('불러오기 실패: ' + e.message); });
-}
-
-function delSnapshot(fname, sha) {
+function delSnapshot(fname) {
   if (!confirm('"' + fname.replace('.json', '') + '" 삭제하시겠습니까?')) return;
-  // 최신 sha를 가져와서 삭제 (캐시 문제 방지)
   ghApi(GH_PATH + fname).then(function(f) {
     if (!f || !f.sha) { alert('파일을 찾을 수 없습니다.'); return; }
-    return ghApi(GH_PATH + fname, 'DELETE', { message: '스냅샷 삭제: ' + fname, sha: f.sha });
+    return ghApi(GH_PATH + fname, 'DELETE', { message: '삭제: ' + fname, sha: f.sha });
   }).then(function(r) {
     if (r && r.commit) {
+      var name = fname.replace('.json', '');
+      delete _allSnapshots[name];
+      if (_activeTab === name) { _activeTab = 'live'; loadLive(); }
+      renderTabs();
       alert('삭제 완료');
-      // 1초 후 목록 갱신 (GitHub 캐시 반영 대기)
-      setTimeout(function() { showLoadModal(); }, 1500);
+      setTimeout(function() { openAdmin(); }, 1500);
     }
   }).catch(function(e) { alert('삭제 실패: ' + e.message); });
 }

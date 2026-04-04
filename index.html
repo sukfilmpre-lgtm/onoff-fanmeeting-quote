@@ -13,10 +13,13 @@
     <span id="rate">...</span>
     <button onclick="init(true)">새로고침</button>
     <button onclick="saveSnapshot()" class="btn-save">저장</button>
-    <button onclick="showLoadModal()" class="btn-load">불러오기</button>
+    <button onclick="openAdmin()" class="btn-admin">관리</button>
   </div>
 </header>
 <main>
+  <!-- 시나리오 탭 -->
+  <div id="scenario-tabs" class="tabs"></div>
+
   <h2>종합 수익 요약 <span id="snap-label" style="font-size:14px;color:#aeaeb2;font-weight:400"></span></h2>
   <div id="summary"><p class="loading">로딩 중...</p></div>
 
@@ -44,13 +47,15 @@
   <a href="https://docs.google.com/spreadsheets/d/1o5XdAT1wg8Jv5Boj6rdy_klGJHlB_am4E7eZXs9S15s/edit" target="_blank">Google Spreadsheet</a>
   · <span id="status"></span>
 </footer>
-<div id="load-modal" class="modal" style="display:none" onclick="if(event.target===this)this.style.display='none'">
+
+<div id="admin-modal" class="modal" style="display:none" onclick="if(event.target===this)this.style.display='none'">
   <div class="modal-box">
-    <h3>저장된 견적 불러오기</h3>
-    <div id="snapshot-list"></div>
+    <h3>관리</h3>
+    <div id="admin-list"></div>
     <button onclick="this.parentElement.parentElement.style.display='none'" class="btn-close">닫기</button>
   </div>
 </div>
+
 <script src="js/app.js"></script>
 </body>
 </html>
